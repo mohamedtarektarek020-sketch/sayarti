@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#2b2470">
+<meta name="robots" content="noindex,nofollow">
+<title>بوابة السائق</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f3fb; --card:#ffffff; --ink:#1c1a3a; --muted:#6b6890; --line:#e6e4f3;
+  --accent:#4f46e5; --accent-ink:#ffffff; --accent-soft:#eceafe;
+  --good:#15803d; --good-bg:#e8f7ee; --warn:#b45309; --warn-bg:#fff4e0; --bad:#b91c1c; --bad-bg:#fdecec; --none:#6b7280; --none-bg:#f1f1f4;
+  --hero1:#5b4fd6; --hero2:#2b2470;
+}
+:root[data-theme="dark"]{
+    --bg:#0f0e1f; --card:#1a1932; --ink:#efeefe; --muted:#a3a0c8; --line:#2c2a4d;
+    --accent:#8b83ff; --accent-ink:#0f0e1f; --accent-soft:#26244a;
+    --good:#4ade80; --good-bg:#12301f; --warn:#fbbf24; --warn-bg:#3a2a0c; --bad:#f87171; --bad-bg:#3b1515; --none:#9ca3af; --none-bg:#23223a;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0f0e1f; --card:#1a1932; --ink:#efeefe; --muted:#a3a0c8; --line:#2c2a4d;
+    --accent:#8b83ff; --accent-ink:#0f0e1f; --accent-soft:#26244a;
+    --good:#4ade80; --good-bg:#12301f; --warn:#fbbf24; --warn-bg:#3a2a0c; --bad:#f87171; --bad-bg:#3b1515; --none:#9ca3af; --none-bg:#23223a;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font-family:"Tajawal",system-ui,sans-serif;font-size:16px;min-height:100vh;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:520px;margin:0 auto;padding:0 16px 40px}
+.hero{background:linear-gradient(150deg,var(--hero1),var(--hero2));color:#fff;padding:28px 20px 70px;text-align:center;border-radius:0 0 28px 28px}
+.hero .logo{width:58px;height:58px;border-radius:18px;background:rgba(255,255,255,.15);display:inline-flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px}
+.hero h1{margin:0;font-size:24px;font-weight:800}
+.hero p{margin:6px 0 0;opacity:.85;font-size:14.5px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 8px 28px rgba(30,20,90,.08)}
+.login{margin-top:-46px}
+label{display:block;font-weight:700;font-size:14px;margin:12px 0 6px}
+.row{display:flex;gap:10px}
+input{width:100%;font:inherit;font-size:18px;padding:13px 14px;border-radius:14px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);outline:none;text-align:center;letter-spacing:.5px}
+input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-soft)}
+.hint{font-size:12.5px;color:var(--muted);margin-top:6px;line-height:1.6}
+button.main{width:100%;margin-top:18px;padding:14px;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);font:inherit;font-size:17px;font-weight:800;cursor:pointer}
+button.main:disabled{opacity:.6}
+.err{display:none;margin-top:12px;padding:11px 12px;border-radius:12px;background:var(--bad-bg);color:var(--bad);font-weight:700;font-size:14px;text-align:center}
+.car{margin-top:-46px}
+.plate{display:inline-flex;align-items:center;gap:8px;background:var(--accent-soft);color:var(--ink);font-weight:800;font-size:22px;padding:6px 16px;border-radius:12px;letter-spacing:1px}
+.carhead{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.carhead .meta{color:var(--muted);font-size:14px;margin-top:6px}
+.out{background:transparent;border:1.5px solid var(--line);color:var(--muted);border-radius:12px;padding:8px 12px;font:inherit;font-size:13.5px;font-weight:700;cursor:pointer;white-space:nowrap}
+.summary{margin-top:14px;padding:12px 14px;border-radius:14px;font-weight:700;font-size:15px;line-height:1.6}
+h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
+.item{display:flex;align-items:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px;margin-bottom:10px}
+.item .ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0}
+.item .tx{flex:1;min-width:0}
+.item .t1{font-weight:800;font-size:16px}
+.item .t2{color:var(--muted);font-size:13.5px;margin-top:3px}
+.badge{font-weight:800;font-size:13px;padding:6px 10px;border-radius:10px;white-space:nowrap;text-align:center}
+.s-good .ic,.s-good .badge{background:var(--good-bg);color:var(--good)}
+.s-warn .ic,.s-warn .badge{background:var(--warn-bg);color:var(--warn)}
+.s-bad .ic,.s-bad .badge{background:var(--bad-bg);color:var(--bad)}
+.s-none .ic,.s-none .badge{background:var(--none-bg);color:var(--none)}
+.sum-good{background:var(--good-bg);color:var(--good)} .sum-warn{background:var(--warn-bg);color:var(--warn)} .sum-bad{background:var(--bad-bg);color:var(--bad)}
+.foot{text-align:center;color:var(--muted);font-size:12.5px;margin-top:22px;line-height:1.7}
+.spin{display:inline-block;width:18px;height:18px;border:2.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-4px}
+@keyframes s{to{transform:rotate(360deg)}}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<div class="hero">
+  <div class="logo">🚗</div>
+  <h1>سيارتي</h1>
+  <p id="heroSub">اعرف مواعيد أوراق سيارتك وتغيير الزيت</p>
+</div>
+
+<div class="wrap">
+  <!-- تسجيل الدخول -->
+  <div class="card login" id="loginBox">
+    <label for="pDigits">رقم اللوحة</label>
+    <div class="row">
+      <input id="pDigits" inputmode="numeric" autocomplete="off" placeholder="الأرقام — مثال 5420" maxlength="4">
+      <input id="pLetters" autocomplete="off" placeholder="الحروف — أ ص ق" maxlength="8">
+    </div>
+    <div class="hint">اكتب أرقام اللوحة والحروف العربي زي ما هي على اللوحة (ترتيب الحروف مش مهم)</div>
+    <label for="iqama">رقم الإقامة</label>
+    <input id="iqama" inputmode="numeric" autocomplete="off" placeholder="10 أرقام" maxlength="10">
+    <button class="main" id="goBtn">عرض بيانات سيارتي</button>
+    <div class="err" id="err"></div>
+  </div>
+
+  <!-- بيانات السيارة -->
+  <div id="carBox" class="hidden">
+    <div class="card car">
+      <div class="carhead">
+        <div>
+          <div class="plate" id="cPlate"></div>
+          <div class="meta" id="cMeta"></div>
+        </div>
+        <button class="out" id="outBtn">خروج</button>
+      </div>
+      <div class="summary" id="cSum"></div>
+    </div>
+    <h2>📄 الأوراق</h2>
+    <div id="cDates"></div>
+    <h2>🛢️ تغيير الزيت</h2>
+    <div id="cOil"></div>
+    <div class="foot" id="cFoot"></div>
+  </div>
+</div>
+
+<script>
+const SALT = "fleet-drivers-portal-v1";
+const enc = new TextEncoder();
+const $ = id => document.getElementById(id);
+const store = {
+  get(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } },
+  set(k,v){ try{ localStorage.setItem(k,v); }catch(e){} },
+  del(k){ try{ localStorage.removeItem(k); }catch(e){} }
+};
+const toLatin = s => String(s||"").replace(/[٠-٩]/g, d => "٠١٢٣٤٥٦٧٨٩".indexOf(d)).replace(/[۰-۹]/g, d => "۰۱۲۳۴۵۶۷۸۹".indexOf(d));
+function plateKey(digits, letters){
+  const d = toLatin(digits).replace(/\D/g, "");
+  const l = String(letters||"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/[^ء-ي]/g,"");
+  return d + l.split("").sort().join("");
+}
+function sortLetters(s){ return s.split("").sort((a,b)=> a<b?-1:a>b?1:0).join(""); }
+function pkey(digits, letters){
+  const d = toLatin(digits).replace(/\D/g, "");
+  const l = String(letters||"").replace(/[أإآ]/g,"ا").replace(/ى/g,"ي").replace(/ة/g,"ه").replace(/[^ء-ي]/g,"");
+  return d + sortLetters(l);
+}
+async function sha256hex(s){
+  const h = await crypto.subtle.digest("SHA-256", enc.encode(s));
+  return [...new Uint8Array(h)].map(b => b.toString(16).padStart(2,"0")).join("");
+}
+async function deriveKey(s){
+  const base = await crypto.subtle.importKey("raw", enc.encode(s), "PBKDF2", false, ["deriveKey"]);
+  return crypto.subtle.deriveKey({name:"PBKDF2", salt:enc.encode(SALT), iterations:120000, hash:"SHA-256"}, base, {name:"AES-GCM", length:256}, false, ["decrypt"]);
+}
+let DATA = null;
+async function loadData(){
+  if (DATA) return DATA;
+  const r = await fetch("data.json?t=" + Date.now(), {cache:"no-store"});
+  if (!r.ok) throw new Error("data");
+  DATA = await r.json(); return DATA;
+}
+function showErr(msg){ const e = $("err"); e.textContent = msg; e.style.display = msg ? "block" : "none"; }
+const fmt = iso => { if (!iso) return "—"; const [y,m,d] = iso.split("-"); return `<bdi dir="ltr">${d}-${m}-${y}</bdi>`; };
+const km = n => Number(n||0).toLocaleString("en-US");
+function dayText(left){
+  if (left == null) return "مش مسجل";
+  if (left < 0) return `منتهي من ${-left} يوم`;
+  if (left === 0) return "بينتهي النهارده";
+  return `باقي ${left} يوم`;
+}
+function cls(left){ if (left == null) return "s-none"; if (left < 0) return "s-bad"; if (left <= 30) return "s-warn"; return "s-good"; }
+const ICONS = { fahs:"🔧", form:"📄", ins:"🛡️", auth:"✍️", card:"🪪" };
+function render(c){
+  $("loginBox").classList.add("hidden"); $("carBox").classList.remove("hidden");
+  $("heroSub").textContent = "بيانات سيارتك محدّثة من الشركة";
+  $("cPlate").textContent = c.plate;
+  $("cMeta").textContent = [c.model, c.year, c.color].filter(Boolean).join(" · ");
+  const dates = c.dates.slice().sort((a,b) => (a.left==null?1e9:a.left) - (b.left==null?1e9:b.left));
+  $("cDates").innerHTML = dates.map(x => `
+    <div class="item ${cls(x.left)}">
+      <div class="ic">${ICONS[x.k]||"📄"}</div>
+      <div class="tx"><div class="t1">${x.l}</div><div class="t2">${x.d ? "ينتهي " + fmt(x.d) : "مش متسجل عندنا — كلّم الشركة"}</div></div>
+      <div class="badge">${dayText(x.left)}</div>
+    </div>`).join("");
+  let oilHtml = "";
+  const o = c.oil;
+  const oilItem = (title, ic, x, every) => {
+    if (!x) return `<div class="item s-none"><div class="ic">${ic}</div><div class="tx"><div class="t1">${title}</div><div class="t2">مفيش تغيير مسجل في بترومين</div></div><div class="badge">—</div></div>`;
+    const c2 = x.left <= 0 ? "s-bad" : x.left <= 1000 ? "s-warn" : "s-good";
+    const b = x.left <= 0 ? `متأخر ${km(-x.left)} كم` : `عند ${km(x.next)} كم`;
+    return `<div class="item ${c2}"><div class="ic">${ic}</div><div class="tx"><div class="t1">${title}</div><div class="t2">آخر تغيير ${fmt(x.date)} على عداد ${km(x.odo)} — كل ${km(every)} كم</div></div><div class="badge">${b}</div></div>`;
+  };
+  if (o){
+    oilHtml = oilItem("زيت الماكينة", "🛢️", o.eng, 10000) + oilItem("زيت القير", "⚙️", o.gb, 50000)
+      + `<div class="hint" style="text-align:center">آخر عداد مسجل عندنا: <b>${km(o.lastOdo)} كم</b> — لو عداد سيارتك وصل للرقم المكتوب، روح بترومين غيّر الزيت</div>`;
+  } else {
+    oilHtml = `<div class="item s-none"><div class="ic">🛢️</div><div class="tx"><div class="t1">تغيير الزيت</div><div class="t2">مفيش زيارات بترومين مسجلة لسيارتك</div></div><div class="badge">—</div></div>`;
+  }
+  $("cOil").innerHTML = oilHtml;
+  const bad = c.dates.filter(x => x.left != null && x.left < 0).length + (o && o.gb && o.gb.left <= 0 ? 1 : 0) + (o && o.eng && o.eng.left <= 0 ? 1 : 0);
+  const warn = c.dates.filter(x => x.left != null && x.left >= 0 && x.left <= 30).length;
+  const s = $("cSum");
+  if (bad){ s.className = "summary sum-bad"; s.textContent = `⚠️ عندك ${bad} حاجة منتهية أو متأخرة — كلّم الشركة على طول`; }
+  else if (warn){ s.className = "summary sum-warn"; s.textContent = `⏳ عندك ${warn} ورقة قربت تنتهي خلال 30 يوم`; }
+  else { s.className = "summary sum-good"; s.textContent = "✅ كل أوراق سيارتك سارية"; }
+  $("cFoot").innerHTML = `آخر تحديث للبيانات: ${fmt(c.asOf)}<br>لو فيه أي حاجة مش صح، كلّم مكتب الحركة`;
+}
+async function login(digits, letters, iqama, silent){
+  showErr("");
+  const iq = toLatin(iqama).replace(/\D/g, "");
+  const pk = pkey(digits, letters);
+  if (!/^\d{1,4}$/.test(toLatin(digits).replace(/\D/g,"")) || pk.replace(/\d/g,"").length < 1){ if (!silent) showErr("اكتب أرقام اللوحة والحروف"); return false; }
+  if (!/^[12]\d{9}$/.test(iq)){ if (!silent) showErr("رقم الإقامة لازم يكون 10 أرقام"); return false; }
+  const btn = $("goBtn"); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري البحث...';
+  try{
+    const data = await loadData();
+    const k = pk + "|" + iq;
+    const id = (await sha256hex("id:" + k)).slice(0, 24);
+    const blob = data.d[id];
+    if (!blob){ if (!silent) showErr("مش لاقيين سيارة بالرقم ده والإقامة دي — اتأكد من البيانات أو كلّم الشركة"); return false; }
+    const raw = Uint8Array.from(atob(blob), ch => ch.charCodeAt(0));
+    const key = await deriveKey(k);
+    const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv: raw.slice(0,12)}, key, raw.slice(12));
+    render(JSON.parse(new TextDecoder().decode(plain)));
+    store.set("dp_login", JSON.stringify({d:digits, l:letters, i:iq}));
+    return true;
+  }catch(e){
+    if (!silent) showErr("حصلت مشكلة في التحميل — جرّب تاني بعد شوية");
+    return false;
+  }finally{
+    btn.disabled = false; btn.textContent = "عرض بيانات سيارتي";
+  }
+}
+$("goBtn").addEventListener("click", () => login($("pDigits").value, $("pLetters").value, $("iqama").value));
+["pDigits","pLetters","iqama"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); }));
+$("outBtn").addEventListener("click", () => {
+  store.del("dp_login");
+  $("carBox").classList.add("hidden"); $("loginBox").classList.remove("hidden");
+  $("heroSub").textContent = "اعرف مواعيد أوراق سيارتك وتغيير الزيت";
+  $("iqama").value = "";
+});
+(() => {
+  try{
+    const s = JSON.parse(store.get("dp_login") || "null");
+    if (s){ $("pDigits").value = s.d || ""; $("pLetters").value = s.l || ""; login(s.d, s.l, s.i, true); }
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
