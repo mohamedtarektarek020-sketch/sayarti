@@ -68,6 +68,19 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 .spin{display:inline-block;width:18px;height:18px;border:2.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-4px}
 @keyframes s{to{transform:rotate(360deg)}}
 .hidden{display:none!important}
+.fbtns{display:flex;gap:8px;flex-shrink:0}
+.fbtn{border:0;border-radius:11px;padding:9px 12px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;background:var(--accent);color:var(--accent-ink);text-decoration:none;white-space:nowrap}
+.fbtn.ghost{background:var(--accent-soft);color:var(--accent)}
+.fbtn:disabled{opacity:.6}
+.sw{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px}
+.sw button{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;padding:8px 12px;font:inherit;font-weight:800;cursor:pointer}
+.sw button.on{border-color:var(--accent);background:var(--accent-soft)}
+.viewer{position:fixed;inset:0;background:rgba(10,8,30,.92);z-index:50;display:flex;flex-direction:column}
+.viewer .vbar{display:flex;gap:8px;justify-content:space-between;align-items:center;padding:12px 16px;color:#fff;font-weight:800}
+.viewer .vbody{flex:1;overflow:auto;display:flex;align-items:flex-start;justify-content:center;padding:0 10px 16px}
+.viewer img{max-width:100%;height:auto;border-radius:10px;background:#fff}
+.viewer iframe{width:100%;height:100%;border:0;background:#fff;border-radius:10px}
+@media (max-width:380px){.item{flex-wrap:wrap}.fbtns{width:100%}.fbtns .fbtn{flex:1;text-align:center}}
 </style>
 </head>
 <body>
@@ -81,11 +94,8 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
   <!-- تسجيل الدخول -->
   <div class="card login" id="loginBox">
     <label for="pDigits">رقم اللوحة</label>
-    <div class="row">
-      <input id="pDigits" inputmode="numeric" autocomplete="off" placeholder="الأرقام — مثال 5420" maxlength="4">
-      <input id="pLetters" autocomplete="off" placeholder="الحروف — أ ص ق" maxlength="8">
-    </div>
-    <div class="hint">اكتب أرقام اللوحة والحروف العربي زي ما هي على اللوحة (ترتيب الحروف مش مهم)</div>
+    <input id="pDigits" inputmode="numeric" autocomplete="off" placeholder="أرقام اللوحة بس — مثال 5420" maxlength="4">
+    <div class="hint">اكتب أرقام اللوحة بس، من غير الحروف</div>
     <label for="iqama">رقم الإقامة</label>
     <input id="iqama" inputmode="numeric" autocomplete="off" placeholder="10 أرقام" maxlength="10">
     <button class="main" id="goBtn">عرض بيانات سيارتي</button>
@@ -104,6 +114,9 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
       </div>
       <div class="summary" id="cSum"></div>
     </div>
+    <div id="cSwitch" class="hidden"></div>
+    <h2>📎 الاستمارة وكارت التشغيل</h2>
+    <div id="cFiles"></div>
     <h2>📄 الأوراق</h2>
     <div id="cDates"></div>
     <h2>🛢️ تغيير الزيت</h2>
@@ -159,7 +172,58 @@ function dayText(left){
 }
 function cls(left){ if (left == null) return "s-none"; if (left < 0) return "s-bad"; if (left <= 30) return "s-warn"; return "s-good"; }
 const ICONS = { fahs:"🔧", form:"📄", ins:"🛡️", auth:"✍️", card:"🪪" };
+function daysLeft(iso){ if (!iso) return null; const t = new Date(); const a = Date.UTC(t.getFullYear(), t.getMonth(), t.getDate()); const [y,m,d] = iso.split("-").map(Number); return Math.round((Date.UTC(y,m-1,d) - a) / 86400000); }
+const b64u8 = s => Uint8Array.from(atob(s), ch => ch.charCodeAt(0));
+const FILECACHE = {};
+async function getFile(f){
+  if (FILECACHE[f.f]) return FILECACHE[f.f];
+  const r = await fetch(f.f, {cache:"no-store"}); if (!r.ok) throw new Error("file");
+  const raw = new Uint8Array(await r.arrayBuffer());
+  const key = await crypto.subtle.importKey("raw", b64u8(f.key), "AES-GCM", false, ["decrypt"]);
+  const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv: raw.slice(0,12)}, key, raw.slice(12));
+  const url = URL.createObjectURL(new Blob([plain], {type: f.mime}));
+  FILECACHE[f.f] = url; return url;
+}
+let CUR = null, CARS = [];
+function fileName(f){ return `${f.t} - ${CUR.plate}.${f.ext||"pdf"}`; }
+async function fileAction(i, mode, btn){
+  const f = CUR.files[i]; const old = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try{
+    const url = await getFile(f);
+    const vurl = (mode !== "dl" && f.pv) ? await getFile(f.pv) : url;
+    if (mode === "dl"){
+      const a = document.createElement("a"); a.href = url; a.download = fileName(f); document.body.appendChild(a); a.click(); setTimeout(() => a.remove(), 1500);
+    } else {
+      const v = document.createElement("div"); v.className = "viewer";
+      v.innerHTML = `<div class="vbar"><span>${f.t}</span><span style="display:flex;gap:8px"><a class="fbtn" href="${url}" download="${fileName(f)}">⬇️ تنزيل</a><button class="fbtn ghost" type="button">✕ قفل</button></span></div><div class="vbody">${(f.mime === "application/pdf" && !f.pv) ? `<iframe src="${url}" title="${f.t}"></iframe>` : `<img src="${vurl}" alt="${f.t}">`}</div>`;
+      v.querySelector("button").addEventListener("click", () => v.remove());
+      document.body.appendChild(v);
+    }
+  }catch(e){ alert("مقدرناش نفتح الملف — جرّب تاني"); }
+  finally{ btn.disabled = false; btn.textContent = old; }
+}
+function renderFiles(c){
+  const cardD = (c.dates.find(x => x.k === "card") || {}).d;
+  const cardLeft = daysLeft(cardD);
+  const locked = cardLeft != null && cardLeft <= 1;
+  const want = [["form","الاستمارة","📄"],["card","كارت التشغيل","🪪"]];
+  $("cFiles").innerHTML = want.map(([k,t,ic]) => {
+    const i = (c.files||[]).findIndex(f => f.k === k);
+    if (k === "card" && locked) return `<div class="item s-bad"><div class="ic">🔒</div><div class="tx"><div class="t1">${t}</div><div class="t2">الكارت منتهي — كلّم الشركة علشان التجديد</div></div></div>`;
+    if (i < 0) return `<div class="item s-none"><div class="ic">${ic}</div><div class="tx"><div class="t1">${t}</div><div class="t2">مش مرفوعة لسه — كلّم الشركة</div></div></div>`;
+    return `<div class="item s-good"><div class="ic">${ic}</div><div class="tx"><div class="t1">${t}</div><div class="t2">${c.files[i].mime === "application/pdf" ? "ملف PDF" : "صورة"}</div></div><div class="fbtns"><button class="fbtn" type="button" data-f="${i}" data-m="view">👁 عرض</button><button class="fbtn ghost" type="button" data-f="${i}" data-m="dl">⬇️ تنزيل</button></div></div>`;
+  }).join("");
+  $("cFiles").querySelectorAll("[data-f]").forEach(b => b.addEventListener("click", () => fileAction(+b.dataset.f, b.dataset.m, b)));
+}
 function render(c){
+  CUR = c;
+  c.dates.forEach(x => { if (x.d) x.left = daysLeft(x.d); });
+  const sw = $("cSwitch");
+  if (CARS.length > 1){
+    sw.className = "sw"; sw.innerHTML = CARS.map((x,i) => `<button type="button" class="${x === c ? "on" : ""}" data-i="${i}">${x.plate}</button>`).join("");
+    sw.querySelectorAll("button").forEach(b => b.addEventListener("click", () => render(CARS[+b.dataset.i])));
+  } else { sw.className = "hidden"; sw.innerHTML = ""; }
+  renderFiles(c);
   $("loginBox").classList.add("hidden"); $("carBox").classList.remove("hidden");
   $("heroSub").textContent = "بيانات سيارتك محدّثة من الشركة";
   $("cPlate").textContent = c.plate;
@@ -194,11 +258,11 @@ function render(c){
   else { s.className = "summary sum-good"; s.textContent = "✅ كل أوراق سيارتك سارية"; }
   $("cFoot").innerHTML = `آخر تحديث للبيانات: ${fmt(c.asOf)}<br>لو فيه أي حاجة مش صح، كلّم مكتب الحركة`;
 }
-async function login(digits, letters, iqama, silent){
+async function login(digits, iqama, silent){
   showErr("");
   const iq = toLatin(iqama).replace(/\D/g, "");
-  const pk = pkey(digits, letters);
-  if (!/^\d{1,4}$/.test(toLatin(digits).replace(/\D/g,"")) || pk.replace(/\d/g,"").length < 1){ if (!silent) showErr("اكتب أرقام اللوحة والحروف"); return false; }
+  const pk = toLatin(digits).replace(/\D/g, "");
+  if (!/^\d{1,4}$/.test(pk)){ if (!silent) showErr("اكتب أرقام اللوحة (من 1 لـ 4 أرقام)"); return false; }
   if (!/^[12]\d{9}$/.test(iq)){ if (!silent) showErr("رقم الإقامة لازم يكون 10 أرقام"); return false; }
   const btn = $("goBtn"); btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري البحث...';
   try{
@@ -210,8 +274,10 @@ async function login(digits, letters, iqama, silent){
     const raw = Uint8Array.from(atob(blob), ch => ch.charCodeAt(0));
     const key = await deriveKey(k);
     const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv: raw.slice(0,12)}, key, raw.slice(12));
-    render(JSON.parse(new TextDecoder().decode(plain)));
-    store.set("dp_login", JSON.stringify({d:digits, l:letters, i:iq}));
+    const obj = JSON.parse(new TextDecoder().decode(plain));
+    CARS = obj.cars || [obj];
+    render(CARS[0]);
+    store.set("dp_login", JSON.stringify({d:pk, i:iq}));
     return true;
   }catch(e){
     if (!silent) showErr("حصلت مشكلة في التحميل — جرّب تاني بعد شوية");
@@ -220,8 +286,8 @@ async function login(digits, letters, iqama, silent){
     btn.disabled = false; btn.textContent = "عرض بيانات سيارتي";
   }
 }
-$("goBtn").addEventListener("click", () => login($("pDigits").value, $("pLetters").value, $("iqama").value));
-["pDigits","pLetters","iqama"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); }));
+$("goBtn").addEventListener("click", () => login($("pDigits").value, $("iqama").value));
+["pDigits","iqama"].forEach(id => $(id).addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); }));
 $("outBtn").addEventListener("click", () => {
   store.del("dp_login");
   $("carBox").classList.add("hidden"); $("loginBox").classList.remove("hidden");
@@ -231,7 +297,7 @@ $("outBtn").addEventListener("click", () => {
 (() => {
   try{
     const s = JSON.parse(store.get("dp_login") || "null");
-    if (s){ $("pDigits").value = s.d || ""; $("pLetters").value = s.l || ""; login(s.d, s.l, s.i, true); }
+    if (s){ $("pDigits").value = s.d || ""; login(s.d, s.i, true); }
   }catch(e){}
 })();
 </script>
