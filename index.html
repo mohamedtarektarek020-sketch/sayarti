@@ -68,6 +68,13 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 .spin{display:inline-block;width:18px;height:18px;border:2.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-4px}
 @keyframes s{to{transform:rotate(360deg)}}
 .hidden{display:none!important}
+.contacts{display:none;margin-top:12px}
+.ct{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px}
+.ct .nm{flex:1;min-width:0;font-weight:800;font-size:15px}
+.ct .ph{color:var(--muted);font-size:13px;font-weight:500;margin-top:2px}
+.ct a{border-radius:11px;padding:9px 11px;font-weight:800;font-size:14px;text-decoration:none;white-space:nowrap}
+.ct a.call{background:var(--accent);color:var(--accent-ink)}
+.ct a.wa{background:var(--good-bg);color:var(--good)}
 .fbtns{display:flex;gap:8px;flex-shrink:0}
 .fbtn{border:0;border-radius:11px;padding:9px 12px;font:inherit;font-size:14px;font-weight:800;cursor:pointer;background:var(--accent);color:var(--accent-ink);text-decoration:none;white-space:nowrap}
 .fbtn.ghost{background:var(--accent-soft);color:var(--accent)}
@@ -100,6 +107,7 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
     <input id="iqama" inputmode="numeric" autocomplete="off" placeholder="10 أرقام" maxlength="10">
     <button class="main" id="goBtn">عرض بيانات سيارتي</button>
     <div class="err" id="err"></div>
+    <div class="contacts" id="contacts"></div>
   </div>
 
   <!-- بيانات السيارة -->
@@ -161,7 +169,10 @@ async function loadData(){
   if (!r.ok) throw new Error("data");
   DATA = await r.json(); return DATA;
 }
-function showErr(msg){ const e = $("err"); e.textContent = msg; e.style.display = msg ? "block" : "none"; }
+const CONTACTS = [["محمد طارق","0569148149"],["محمد دراكولا","0568845643"]];
+const ctHtml = () => CONTACTS.map(([n,p]) => `<div class="ct"><div class="nm">${n}<div class="ph"><bdi dir="ltr">${p}</bdi></div></div><a class="call" href="tel:${p}">📞 اتصال</a><a class="wa" href="https://wa.me/966${p.replace(/^0/,"")}" target="_blank" rel="noopener">واتساب</a></div>`).join("");
+function showContacts(on){ const c = $("contacts"); c.innerHTML = on ? ctHtml() : ""; c.style.display = on ? "block" : "none"; }
+function showErr(msg){ showContacts(false); const e = $("err"); e.textContent = msg; e.style.display = msg ? "block" : "none"; }
 const fmt = iso => { if (!iso) return "—"; const [y,m,d] = iso.split("-"); return `<bdi dir="ltr">${d}-${m}-${y}</bdi>`; };
 const km = n => Number(n||0).toLocaleString("en-US");
 function dayText(left){
@@ -256,7 +267,8 @@ function render(c){
   if (bad){ s.className = "summary sum-bad"; s.textContent = `⚠️ عندك ${bad} حاجة منتهية أو متأخرة — كلّم الشركة على طول`; }
   else if (warn){ s.className = "summary sum-warn"; s.textContent = `⏳ عندك ${warn} ورقة قربت تنتهي خلال 30 يوم`; }
   else { s.className = "summary sum-good"; s.textContent = "✅ كل أوراق سيارتك سارية"; }
-  $("cFoot").innerHTML = `آخر تحديث للبيانات: ${fmt(c.asOf)}<br>لو فيه أي حاجة مش صح، كلّم مكتب الحركة`;
+  $("cFoot").innerHTML = `آخر تحديث للبيانات: ${fmt(c.asOf)}<br>لو فيه أي حاجة مش صح، كلّم المسؤول:`;
+  $("cFoot").insertAdjacentHTML("beforeend", `<div style="text-align:right">${ctHtml()}</div>`);
 }
 async function login(digits, iqama, silent){
   showErr("");
@@ -270,7 +282,7 @@ async function login(digits, iqama, silent){
     const k = pk + "|" + iq;
     const id = (await sha256hex("id:" + k)).slice(0, 24);
     const blob = data.d[id];
-    if (!blob){ if (!silent) showErr("لا يوجد بيانات بهذا الرقم، فضلاً متابعة الشركة أو الاتصال على رقم المسؤول"); return false; }
+    if (!blob){ if (!silent){ showErr("لا يوجد بيانات بهذا الرقم، فضلاً متابعة الشركة أو الاتصال على رقم المسؤول"); showContacts(true); } return false; }
     const raw = Uint8Array.from(atob(blob), ch => ch.charCodeAt(0));
     const key = await deriveKey(k);
     const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv: raw.slice(0,12)}, key, raw.slice(12));
