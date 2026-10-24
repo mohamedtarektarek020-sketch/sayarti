@@ -270,7 +270,7 @@ async function login(digits, iqama, silent){
     const k = pk + "|" + iq;
     const id = (await sha256hex("id:" + k)).slice(0, 24);
     const blob = data.d[id];
-    if (!blob){ if (!silent) showErr("مش لاقيين سيارة بالرقم ده والإقامة دي — اتأكد من البيانات أو كلّم الشركة"); return false; }
+    if (!blob){ if (!silent) showErr("لا يوجد بيانات بهذا الرقم، فضلاً متابعة الشركة أو الاتصال على رقم المسؤول"); return false; }
     const raw = Uint8Array.from(atob(blob), ch => ch.charCodeAt(0));
     const key = await deriveKey(k);
     const plain = await crypto.subtle.decrypt({name:"AES-GCM", iv: raw.slice(0,12)}, key, raw.slice(12));
