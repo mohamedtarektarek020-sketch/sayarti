@@ -33,7 +33,7 @@ button{cursor:pointer}
 .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 
 /* Home */
-#home{min-height:100%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding-block:32px;text-align:center}
+#home{min-height:100%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding-top:calc(40px + env(safe-area-inset-top,0px));padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));text-align:center}
 #home > img{width:100%;max-width:380px;height:auto}
 #home h1{margin:0;font-size:44px;font-weight:700;color:var(--navy);line-height:1.2}
 #home p{margin:6px 0 0;color:var(--muted)}
@@ -284,6 +284,6 @@ label{display:flex;flex-direction:column;gap:8px;font-size:14px;color:#374151}
 
 </div>
 
-<script src="app.js?v=2"></script>
+<script src="app.js?v=3"></script>
 </body>
 </html>
