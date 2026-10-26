@@ -6,7 +6,7 @@
 
   var COLORS = { 'أبيض': '#F7F8FA', 'فضي': '#C3C8CE', 'رمادي': '#8C9299', 'رصاصي': '#5F656C', 'أسود': '#1F2328' };
   var CARS = [
-    { plate: 'أ ص ع 2044', serial: '62395910', name: 'شيري اريزو 5', en: 'Chery Arrizo 5', brand: 'شيري', year: '2023', color: 'رمادي', img: 'img/chery_grey.jpg', daily: true },
+    { plate: 'أ ص ع 2044', serial: '62395910', name: 'شيري اريزو 5', en: 'Chery Arrizo 5', brand: 'شيري', year: '2023', color: 'رمادي', img: 'img/chery_grey.jpg?v=2', daily: true },
     { plate: 'ا ع ح 2628', serial: '618345020', name: 'هيونداي أي تن', en: 'Hyundai i10', brand: 'هيونداي', year: '2024', color: 'فضي', img: 'img/i10_silver.jpg' },
     { plate: 'ا ع ح 8864', serial: '552821710', name: 'ميتسوبيشي اتراج', en: 'Mitsubishi Attrage', brand: 'ميتسوبيشي', year: '2019', color: 'رصاصي', img: 'img/attrage_gunmetal.jpg' },
     { plate: 'أ ط ل 3761', serial: '334939810', name: 'هيونداي اكسنت', en: 'Hyundai Accent', brand: 'هيونداي', year: '2022', color: 'أبيض', img: 'img/accent_white.jpg' },
