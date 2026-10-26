@@ -33,7 +33,7 @@ button{cursor:pointer}
 .wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
 
 /* Home */
-#home{min-height:100%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding-top:calc(40px + env(safe-area-inset-top,0px));padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));text-align:center}
+#home{min-height:100%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding-top:calc(68px + env(safe-area-inset-top,0px));padding-bottom:calc(32px + env(safe-area-inset-bottom,0px));text-align:center}
 #home > img{width:100%;max-width:380px;height:auto}
 #home h1{margin:0;font-size:44px;font-weight:700;color:var(--navy);line-height:1.2}
 #home p{margin:6px 0 0;color:var(--muted)}
@@ -147,6 +147,14 @@ label{display:flex;flex-direction:column;gap:8px;font-size:14px;color:#374151}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;z-index:30;font-size:15px;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
 .status-card{display:flex;flex-direction:column;gap:12px;text-align:center;align-items:center}
 .status-card .big{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+
+/* Language */
+#home{position:relative}
+.lang-btn{position:absolute;top:calc(12px + env(safe-area-inset-top,0px));inset-inline-end:16px;min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #D1D9E4;background:var(--surface);color:var(--navy);font-size:14px;font-weight:700}
+.lang-mini{font-size:13px;font-weight:700}
+.choice{text-align:start}
+[dir="ltr"] #backBtn svg{transform:scaleX(-1)}
+[dir="ltr"] .car .en{text-align:left}
 @media (prefers-reduced-motion: no-preference){
   .screen{animation:in .18s ease-out}
   @keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
@@ -158,15 +166,16 @@ label{display:flex;flex-direction:column;gap:8px;font-size:14px;color:#374151}
 <div id="app" dir="rtl" lang="ar">
 
 <section id="home" class="screen wrap">
+  <button class="lang-btn" id="langBtn" type="button" lang="en">English</button>
   <img src="img/logo.png" alt="شعار العسيري اللوجستية ومسار الصفوة اللوجستية">
   <div>
     <h1>إيجار</h1>
     <p>تأجير سيارات يومي وشهري</p>
   </div>
-  <form class="card" id="idForm" novalidate style="width:100%;max-width:420px;text-align:right">
+  <form class="card" id="idForm" novalidate style="width:100%;max-width:420px;text-align:start">
     <h2 style="font-size:20px">تسجيل الدخول</h2>
     <label for="fullName">الاسم
-      <input class="field" id="fullName" autocomplete="name" placeholder="الاسم كما في الإقامة" style="direction:rtl;text-align:right;letter-spacing:0;font-size:18px">
+      <input class="field" id="fullName" autocomplete="name" placeholder="الاسم كما في الإقامة" dir="auto" style="text-align:start;letter-spacing:0;font-size:18px">
     </label>
     <label for="iqama">رقم الإقامة
       <input class="field" id="iqama" inputmode="numeric" maxlength="10" placeholder="2xxxxxxxxx" autocomplete="off">
@@ -197,7 +206,7 @@ label{display:flex;flex-direction:column;gap:8px;font-size:14px;color:#374151}
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
       <span class="dotn" id="bellCount" hidden>0</span>
     </button>
-    <div id="barSpacer" style="width:44px;height:44px"></div>
+    <button class="icon-btn lang-mini" id="langBtn2" type="button" lang="en">EN</button>
   </div>
 </header>
 
@@ -284,6 +293,6 @@ label{display:flex;flex-direction:column;gap:8px;font-size:14px;color:#374151}
 
 </div>
 
-<script src="app.js?v=5"></script>
+<script src="app.js?v=7"></script>
 </body>
 </html>
