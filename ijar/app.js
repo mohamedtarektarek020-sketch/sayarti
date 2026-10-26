@@ -80,7 +80,7 @@
     'الطلب ما اتبعتش، راجع البيانات وحاول تاني.': 'The request was not sent. Check your details and try again.',
     'مفيش اتصال بالإنترنت، حاول تاني.': 'No internet connection, please try again.', 'تم قبول طلبك': 'Your request was approved',
     'تم رفض طلبك': 'Your request was rejected', 'لا يوجد طلب حالي': 'No current request', 'بانتظار الاعتماد': 'Pending approval',
-    'رقم الطلب': 'Request number', 'السبب': 'Reason', 'طلب سيارة جديدة': 'Request another car',
+    'رقم الطلب': 'Request number', 'طلب': 'request', 'طلبات': 'requests', 'السبب': 'Reason', 'طلب سيارة جديدة': 'Request another car',
     'طلبك وصل لقسم الاعتمادات. الصفحة دي بتتحدّث لوحدها، وهيرن الجرس لما يوصل الرد.': 'Your request reached the approvals team. This page updates by itself, and a bell will ring when the reply arrives.',
     'تواصل مع قسم الحركة لاستلام السيارة.': 'Contact the fleet department to pick up the car.',
     'مسار الصفوة': 'Masar Alsafwa', 'العسيري': 'Asiri',
@@ -127,7 +127,7 @@
     if (!$('idErr').hidden && $('idErr').__msg) $('idErr').textContent = T($('idErr').__msg);
   }
 
-  var TAKEN = {}, MYREQ = null, PENDING = null, pollT = null;
+  var TAKEN = {}, PENDCNT = {}, MYREQ = null, PENDING = null, pollT = null;
   var $ = function (id) { return document.getElementById(id); };
   var screens = { home: 'home', otp: 's-otp', plan: 's-plan', cars: 's-cars', status: 's-status' };
   var BACK = { otp: 'home', plan: 'home', cars: 'plan', status: 'home' };
@@ -213,7 +213,7 @@
   function loadTaken() {
     if (!API_READY) return;
     fetch(API + '?a=taken').then(function (r) { return r.json(); }).then(function (j) {
-      if (!j || !j.ok) return; TAKEN = {}; (j.plates || []).forEach(function (p) { TAKEN[p] = true; });
+      if (!j || !j.ok) return; TAKEN = {}; (j.plates || []).forEach(function (p) { TAKEN[p] = true; }); PENDCNT = j.pending || {};
       if (S.screen === 'cars') renderCars();
     }).catch(function () {});
   }
@@ -243,7 +243,8 @@
       var price = month ? 1800 : 100;
       var art = document.createElement('article'); art.className = 'car';
       art.innerHTML =
-        '<span class="badge">' + T('متاحة') + '</span>' +
+        '<div class="badges"><span class="badge">' + T('متاحة') + '</span>' +
+        (PENDCNT[c.plate] ? '<span class="badge pend">' + PENDCNT[c.plate] + ' ' + T(PENDCNT[c.plate] > 1 ? 'طلبات' : 'طلب') + ' ' + T('بانتظار الاعتماد') + '</span>' : '') + '</div>' +
         '<div class="ph"><img loading="lazy" alt=""></div>' +
         '<h3></h3><p class="en"></p>' +
         '<div class="color"><span class="dot"></span><span class="cn"></span></div>' +
@@ -298,6 +299,7 @@
       .then(function (r) { return r.json(); })
       .then(function (j) {
         if (j && j.ok) {
+          PENDCNT[PENDING.plate] = (PENDCNT[PENDING.plate] || 0) + 1;
           MYREQ = Object.assign({}, PENDING, { id: j.id, status: 'بانتظار الاعتماد', reason: '', createdAt: new Date().toISOString() });
           store('ijar-req', MYREQ); $('myReqBtn').hidden = false;
           $('sheet').hidden = true; show('status'); return;
