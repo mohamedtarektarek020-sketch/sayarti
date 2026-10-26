@@ -19,6 +19,38 @@
     { plate: 'أ ط ن 9891', serial: '91984910', name: 'تويوتا يارس', en: 'Toyota Yaris', brand: 'تويوتا', year: '2023', color: 'فضي', img: 'img/yaris_silver.jpg' }
   ];
 
+  /* قائمة العربيات المتاحة بتتحدّث من الداش بورد (كل ساعة) — القائمة اللي فوق احتياطي لو السيرفر مردّش */
+  var MODELS = [
+    { re: /اريزو|أريزو|شيري/, key: 'chery', name: 'شيري اريزو 5', en: 'Chery Arrizo 5', brand: 'شيري', daily: true },
+    { re: /أي ?تن|اي ?تن|[أا]ي ?10|i10/i, key: 'i10', name: 'هيونداي أي تن', en: 'Hyundai i10', brand: 'هيونداي' },
+    { re: /اتراج|أتراج/, key: 'attrage', name: 'ميتسوبيشي اتراج', en: 'Mitsubishi Attrage', brand: 'ميتسوبيشي' },
+    { re: /اكسنت|أكسنت/, key: 'accent', name: 'هيونداي اكسنت', en: 'Hyundai Accent', brand: 'هيونداي' },
+    { re: /بيجاس/, key: 'pegas', name: 'كيا بيجاس', en: 'Kia Pegas', brand: 'كيا' },
+    { re: /سوز|سوذ|دي[زذ] ?ا?ير|ديزير/, key: 'dzold', name: 'سوزوكي ديزاير', en: 'Suzuki Dzire', brand: 'سوزوكي' },
+    { re: /صني/, key: 'sunny', name: 'نيسان صني', en: 'Nissan Sunny', brand: 'نيسان' },
+    { re: /يارس/, key: 'yaris', name: 'تويوتا يارس', en: 'Toyota Yaris', brand: 'تويوتا' }
+  ];
+  var COLOR_FILE = { 'أبيض': 'white', 'فضي': 'silver', 'رمادي': 'grey', 'رصاصي': 'gunmetal', 'أسود': 'black' };
+  function carFromDash(c) {
+    var model = String(c.model || '').trim(), color = String(c.color || '').trim();
+    var m = null; for (var i = 0; i < MODELS.length; i++) if (MODELS[i].re.test(model)) { m = MODELS[i]; break; }
+    var file = COLOR_FILE[color] || 'white';
+    return {
+      plate: c.plate, serial: String(c.serial || ''), year: String(c.year || ''), color: color || 'غير محدد',
+      name: m ? m.name : (model || 'سيارة'), en: m ? m.en : model, brand: m ? m.brand : (model || 'أخرى'),
+      img: m ? ('img/' + m.key + '_' + file + '.jpg?v=3') : 'img/generic.svg', daily: !!(m && m.daily)
+    };
+  }
+  function loadCars() {
+    if (!API_READY) return;
+    fetch(API + '?a=cars').then(function (r) { return r.json(); }).then(function (j) {
+      if (!j || !j.ok || !j.cars || !j.cars.length) return;
+      CARS = j.cars.filter(function (c) { return c && c.plate; }).map(carFromDash);
+      if (S.screen === 'cars') renderCars();
+    }).catch(function () {});
+  }
+  loadCars();
+
   var S = { screen: 'home', name: '', company: '', iqama: '', phone: '', plan: 'day', cat: 'all' };
   var TAKEN = {}, MYREQ = null, PENDING = null, pollT = null;
   var $ = function (id) { return document.getElementById(id); };
@@ -34,7 +66,7 @@
     $('s-id').hidden = true;
     $('bar').hidden = (name === 'home');
     window.scrollTo(0, 0);
-    if (name === 'cars') { renderCars(); loadTaken(); }
+    if (name === 'cars') { renderCars(); loadTaken(); loadCars(); }
     if (name === 'status') { renderStatus(); refreshStatus(); }
     if (name === 'otp') setTimeout(function () { $('otp').focus(); }, 50);
     clearInterval(pollT);
