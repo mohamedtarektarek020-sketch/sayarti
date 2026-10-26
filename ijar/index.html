@@ -1,0 +1,289 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1E3A5F">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="إيجار">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/icon-192.png">
+<title>إيجار</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@400;500;600;700&display=swap">
+<style>
+/* Layout: one-column mobile app flow, screens swap in place; navy header bar, orange actions */
+:root{
+  --bg:#F3F5F8; --surface:#FFFFFF; --ink:#1A2230; --muted:#4B5563; --line:#E2E8F0;
+  --navy:#1E3A5F; --navy-2:#3B5679; --act:#C2410C; --act-soft:#FFF1E8;
+  --ok:#166534; --ok-soft:#E7F6EC; --err:#B91C1C; --note:#7A4B00; --note-soft:#FFF7E6;
+  --font:'IBM Plex Sans Arabic', 'Segoe UI', Tahoma, system-ui, sans-serif;
+}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+img{max-width:100%}
+html{color-scheme:light;-webkit-text-size-adjust:100%}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);font-size:16px;line-height:1.6}
+button,input{font-family:inherit}
+button{cursor:pointer}
+:focus-visible{outline:3px solid var(--act);outline-offset:2px}
+.wrap{padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px))}
+
+/* Home */
+#home{min-height:100%;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding-block:32px;text-align:center}
+#home > img{width:100%;max-width:380px;height:auto}
+#home h1{margin:0;font-size:44px;font-weight:700;color:var(--navy);line-height:1.2}
+#home p{margin:6px 0 0;color:var(--muted)}
+.big-btn{width:100%;max-width:360px;min-height:64px;border:none;border-radius:16px;background:var(--act);color:#fff;font-size:20px;font-weight:700;display:flex;align-items:center;justify-content:center;gap:12px}
+
+/* Header bar */
+header.bar{background:var(--navy);color:#fff;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--navy)}
+header.bar .in{max-width:1180px;margin:0 auto;padding-block:12px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.icon-btn{width:44px;height:44px;border-radius:10px;border:1px solid var(--navy-2);background:transparent;color:#fff;display:flex;align-items:center;justify-content:center}
+header.bar .t{font-size:22px;font-weight:700}
+
+/* Forms */
+.narrow{max-width:440px;margin:0 auto;padding-block:32px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:16px}
+.step{font-size:13px;color:var(--muted)}
+h2{margin:0;font-size:22px;text-wrap:balance}
+label{display:flex;flex-direction:column;gap:8px;font-size:14px;color:#374151}
+.field{height:56px;border:2px solid #D1D9E4;border-radius:12px;padding:0 16px;font-size:22px;letter-spacing:.08em;text-align:center;direction:ltr;color:var(--ink);background:#fff;width:100%}
+.field.otp{height:64px;font-size:30px;letter-spacing:.5em}
+.field:focus{border-color:var(--navy);outline:none}
+.co{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.co-opt{flex-direction:row;align-items:center;justify-content:center;gap:8px;min-height:52px;border:2px solid #D1D9E4;border-radius:12px;background:#fff;font-size:17px;font-weight:700;color:var(--ink);cursor:pointer}
+.co-opt input{accent-color:var(--navy);width:18px;height:18px;margin:0}
+.co-opt:has(input:checked){border-color:var(--navy);background:#E8EEF6}
+.err{margin:0;font-size:14px;color:var(--err)}
+.ok{margin:0;font-size:13px;color:var(--ok)}
+.primary{min-height:56px;border:none;border-radius:12px;background:var(--act);color:#fff;font-size:18px;font-weight:700}
+.links{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px}
+.link{min-height:44px;border:none;background:transparent;color:var(--navy);font-size:14px;font-weight:600;text-decoration:underline;padding:0}
+.link.quiet{color:var(--muted);font-weight:400;text-decoration:none}
+.note{margin:0;padding:10px 12px;background:var(--note-soft);border-radius:10px;font-size:13px;color:var(--note)}
+
+/* Plan choice */
+.choice{background:var(--surface);border:2px solid var(--line);border-radius:16px;padding:20px;display:flex;align-items:center;gap:16px;text-align:right;color:var(--ink);width:100%}
+.choice:hover{border-color:var(--navy)}
+.choice .ic{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.choice .nm{display:block;font-size:20px;font-weight:700}
+.choice .sub{display:block;font-size:14px;color:var(--muted)}
+
+/* Cars */
+.cars-main{max-width:1180px;margin:0 auto;padding-block:20px 40px}
+.cars-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px}
+.cars-head h1{margin:0;font-size:22px}
+.cars-head p{margin:4px 0 0;font-size:14px;color:var(--muted)}
+.seg{display:flex;background:var(--surface);border:1px solid #D1D9E4;border-radius:10px;padding:4px;gap:4px}
+.seg button{min-height:40px;padding:0 18px;border:none;border-radius:8px;font-size:14px;font-weight:600;background:transparent;color:var(--ink)}
+.seg button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px}
+.chips button{min-height:44px;padding:0 18px;border-radius:999px;font-size:14px;font-weight:600;border:1px solid #D1D9E4;background:var(--surface);color:var(--ink)}
+.chips button[aria-pressed="true"]{border-color:var(--navy);background:var(--navy);color:#fff}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.car{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.car .ph{height:160px;border-radius:10px;overflow:hidden;background:#F6F8FB}
+.car .ph img{width:100%;height:100%;object-fit:cover;display:block}
+.badge{align-self:flex-start;background:var(--ok-soft);color:var(--ok);font-size:12px;font-weight:600;padding:3px 10px;border-radius:999px}
+.car h3{margin:0;font-size:17px}
+.car .en{margin:0;font-size:13px;color:var(--muted);direction:ltr;text-align:right}
+.color{display:flex;align-items:center;gap:6px;font-size:13px;color:#374151}
+.dot{width:14px;height:14px;border-radius:50%;border:1px solid #8B95A1;display:inline-block}
+.tags{display:flex;flex-wrap:wrap;gap:6px;font-size:12px;color:#374151}
+.tags span{background:#F1F4F8;border-radius:6px;padding:3px 8px;font-variant-numeric:tabular-nums}
+.foot{display:flex;align-items:flex-end;justify-content:space-between;gap:8px;margin-top:auto;padding-top:8px;border-top:1px solid #EEF2F6}
+.price{font-size:22px;font-weight:700;font-variant-numeric:tabular-nums}
+.price small{font-size:13px;font-weight:500}
+.per{font-size:12px;color:var(--muted)}
+.book{min-height:44px;padding:0 16px;border-radius:8px;border:none;background:var(--act);color:#fff;font-size:14px;font-weight:600}
+.credit{margin:24px 0 0;font-size:12px;color:var(--muted);text-align:center}
+
+/* Booking sheet */
+.sheet-bg{position:fixed;inset:0;background:rgba(15,23,42,.5);display:flex;align-items:flex-end;justify-content:center;z-index:20;padding-left:max(16px, env(safe-area-inset-left, 0px));padding-right:max(16px, env(safe-area-inset-right, 0px));padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.sheet{background:var(--surface);border-radius:16px;padding:20px;width:100%;max-width:440px;display:flex;flex-direction:column;gap:10px}
+.sheet h2{font-size:20px}
+.sum{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:15px;margin:0}
+.sum dt{color:var(--muted)}
+.sum dd{margin:0;font-weight:600;font-variant-numeric:tabular-nums}
+
+/* Staff views */
+.staff-main{max-width:980px;margin:0 auto;padding-block:20px 40px;display:flex;flex-direction:column;gap:16px}
+.staff-head{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px}
+.staff-head h1{margin:0;font-size:22px}
+.staff-head p{margin:2px 0 0;font-size:14px;color:var(--muted)}
+.tabs{display:flex;gap:4px;background:var(--surface);border:1px solid #D1D9E4;border-radius:10px;padding:4px;flex-wrap:wrap}
+.tabs button{min-height:40px;padding:0 16px;border:none;border-radius:8px;background:transparent;font-size:14px;font-weight:600;color:var(--ink);display:flex;align-items:center;gap:6px}
+.tabs button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.cnt{min-width:22px;height:22px;border-radius:11px;background:var(--act);color:#fff;font-size:12px;display:inline-flex;align-items:center;justify-content:center;padding:0 6px;font-variant-numeric:tabular-nums}
+.req{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.req.pending{border-inline-start:4px solid var(--act)}
+.req .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.req .top h3{margin:0;font-size:17px}
+.req .when{font-size:12px;color:var(--muted)}
+.st{font-size:12px;font-weight:700;padding:3px 10px;border-radius:999px;white-space:nowrap}
+.st.pending{background:var(--act-soft);color:var(--act)}
+.st.approved{background:var(--ok-soft);color:var(--ok)}
+.st.rejected{background:#FDECEC;color:var(--err)}
+.kv{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:6px 16px;margin:0;font-size:14px}
+.kv div{display:flex;gap:6px;min-width:0}
+.kv dt{color:var(--muted);white-space:nowrap}
+.kv dd{margin:0;font-weight:600;overflow-wrap:anywhere;font-variant-numeric:tabular-nums}
+.acts{display:flex;gap:8px;flex-wrap:wrap}
+.btn-ok{min-height:44px;padding:0 20px;border:none;border-radius:8px;background:var(--ok);color:#fff;font-size:15px;font-weight:700}
+.btn-no{min-height:44px;padding:0 20px;border:1px solid var(--err);border-radius:8px;background:#fff;color:var(--err);font-size:15px;font-weight:700}
+.reason{display:flex;flex-direction:column;gap:8px}
+.reason textarea{min-height:80px;border:2px solid #D1D9E4;border-radius:10px;padding:10px;font-family:inherit;font-size:15px;resize:vertical;width:100%}
+.reason .rowb{display:flex;gap:8px;flex-wrap:wrap}
+.empty{background:var(--surface);border:1px dashed #C7D0DC;border-radius:12px;padding:28px 16px;text-align:center;color:var(--muted)}
+.bell{position:relative}
+.bell .dotn{position:absolute;top:-4px;left:-4px;min-width:18px;height:18px;border-radius:9px;background:var(--act);color:#fff;font-size:11px;display:flex;align-items:center;justify-content:center;padding:0 4px}
+.soundbar{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);flex-wrap:wrap}
+.soundbar button{min-height:36px;padding:0 12px;border-radius:8px;border:1px solid #D1D9E4;background:var(--surface);font-size:13px;color:var(--ink)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(16px + env(safe-area-inset-bottom,0px));background:var(--navy);color:#fff;padding:12px 18px;border-radius:12px;z-index:30;font-size:15px;max-width:calc(100% - 32px);box-shadow:0 6px 20px rgba(0,0,0,.2)}
+.status-card{display:flex;flex-direction:column;gap:12px;text-align:center;align-items:center}
+.status-card .big{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center}
+@media (prefers-reduced-motion: no-preference){
+  .screen{animation:in .18s ease-out}
+  @keyframes in{from{opacity:.4;transform:translateY(6px)}to{opacity:1;transform:none}}
+}
+</style>
+
+</head>
+<body>
+<div id="app" dir="rtl" lang="ar">
+
+<section id="home" class="screen wrap">
+  <img src="img/logo.png" alt="شعار العسيري اللوجستية ومسار الصفوة اللوجستية">
+  <div>
+    <h1>إيجار</h1>
+    <p>تأجير سيارات يومي وشهري</p>
+  </div>
+  <form class="card" id="idForm" novalidate style="width:100%;max-width:420px;text-align:right">
+    <h2 style="font-size:20px">تسجيل الدخول</h2>
+    <label for="fullName">الاسم
+      <input class="field" id="fullName" autocomplete="name" placeholder="الاسم كما في الإقامة" style="direction:rtl;text-align:right;letter-spacing:0;font-size:18px">
+    </label>
+    <label for="iqama">رقم الإقامة
+      <input class="field" id="iqama" inputmode="numeric" maxlength="10" placeholder="2xxxxxxxxx" autocomplete="off">
+    </label>
+    <label for="phone">رقم الجوال
+      <input class="field" id="phone" type="tel" inputmode="numeric" maxlength="10" placeholder="05xxxxxxxx" autocomplete="tel">
+    </label>
+    <fieldset style="border:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px">
+      <legend style="font-size:14px;color:#374151;padding:0;margin-bottom:8px">الشركة</legend>
+      <div class="co" role="radiogroup">
+        <label class="co-opt"><input type="radio" name="company" value="مسار الصفوة"><span>مسار</span></label>
+        <label class="co-opt"><input type="radio" name="company" value="العسيري"><span>عسيري</span></label>
+      </div>
+    </fieldset>
+    <p class="err" id="idErr" hidden></p>
+    <button class="primary" type="submit">الدخول</button>
+  </form>
+  <button class="link" id="myReqBtn" type="button" hidden>متابعة طلبي الحالي</button>
+</section>
+
+<header class="bar wrap" id="bar" hidden>
+  <div class="in">
+    <button class="icon-btn" id="backBtn" type="button" aria-label="رجوع">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg>
+    </button>
+    <div class="t" id="barTitle">إيجار</div>
+    <button class="icon-btn bell" id="bellBtn" type="button" aria-label="التنبيهات" hidden style="display:none">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"></path><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"></path></svg>
+      <span class="dotn" id="bellCount" hidden>0</span>
+    </button>
+    <div id="barSpacer" style="width:44px;height:44px"></div>
+  </div>
+</header>
+
+<section id="s-id" class="screen wrap" hidden></section>
+
+<section id="s-otp" class="screen wrap" hidden>
+  <form class="narrow" id="otpForm" novalidate>
+    <div class="card">
+      <div class="step">الخطوة 2 من 3</div>
+      <h2>أدخل رمز التحقق</h2>
+      <p style="margin:0;font-size:15px;color:#374151">أرسلنا رسالة نصية فيها رمز من 4 أرقام إلى الجوال <span id="maskedPhone" style="direction:ltr;display:inline-block;font-weight:700"></span></p>
+      <label for="otp">رمز التحقق
+        <input class="field otp" id="otp" inputmode="numeric" maxlength="4" placeholder="••••" autocomplete="one-time-code">
+      </label>
+      <p class="err" id="otpErr" hidden>الرمز غير صحيح، حاول مرة ثانية</p>
+      <button class="primary" type="submit">تأكيد</button>
+      <div class="links">
+        <button class="link" id="resendBtn" type="button">إعادة إرسال الرمز</button>
+        <button class="link quiet" id="changePhoneBtn" type="button">تغيير رقم الجوال</button>
+      </div>
+      <p class="ok" id="resent" hidden>تم إرسال رمز جديد</p>
+      <p class="note">نسخة تجريبية: الرسالة لا تُرسل فعليًا، استخدم الرمز 1234</p>
+    </div>
+  </form>
+</section>
+
+<section id="s-plan" class="screen wrap" hidden>
+  <div class="narrow" style="display:flex;flex-direction:column;gap:16px">
+    <div class="step" id="planStep">الخطوة 3 من 3</div>
+    <h2>اختر نوع الإيجار</h2>
+    <button class="choice" type="button" data-plan="day">
+      <span class="ic" style="background:var(--act-soft);color:var(--act)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path></svg>
+      </span>
+      <span style="flex:1"><span class="nm">إيجار يومي</span><span class="sub">100 ريال في اليوم</span></span>
+    </button>
+    <button class="choice" type="button" data-plan="month">
+      <span class="ic" style="background:#E8EEF6;color:var(--navy)">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"></rect><path d="M3 10h18M8 3v4M16 3v4"></path></svg>
+      </span>
+      <span style="flex:1"><span class="nm">إيجار شهري</span><span class="sub">60 ريال في اليوم</span></span>
+    </button>
+  </div>
+</section>
+
+<section id="s-cars" class="screen wrap" hidden>
+  <div class="cars-main">
+    <div class="cars-head">
+      <div>
+        <h1>السيارات المتاحة</h1>
+        <p id="carsSub"></p>
+      </div>
+      <div class="seg" role="group" aria-label="نوع الإيجار">
+        <button type="button" data-plan="day">يومي</button>
+        <button type="button" data-plan="month">شهري</button>
+      </div>
+    </div>
+    <div class="chips" id="chips"></div>
+    <div class="grid" id="grid"></div>
+    <p class="credit">صور السيارات توضيحية للموديل — المصدر: Wikimedia Commons (تراخيص حرة CC)</p>
+  </div>
+</section>
+
+
+<section id="s-status" class="screen wrap" hidden>
+  <div class="narrow">
+    <div class="card status-card" id="statusCard"></div>
+  </div>
+</section>
+
+
+
+<div class="toast" id="toast" role="status" hidden></div>
+
+<div class="sheet-bg" id="sheet" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetT">
+    <h2 id="sheetT">ملخص طلب الحجز</h2>
+    <dl class="sum" id="sum"></dl>
+    <p class="err" id="sendErr" hidden></p>
+    <button class="primary" id="sendReq" type="button">إرسال الطلب للاعتماد</button>
+    <button class="link quiet" id="closeSheet" type="button" style="align-self:center">إلغاء</button>
+  </div>
+</div>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
