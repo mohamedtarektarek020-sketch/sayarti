@@ -1,7 +1,7 @@
 /* منصة إيجار — تطبيق المناديب */
 (function () {
   // رابط السيرفر (Google Apps Script) — بيتحط هنا بعد الـ Deploy
-  var API = 'PASTE_APPS_SCRIPT_URL_HERE';
+  var API = 'https://script.google.com/macros/s/AKfycbxmEUUhbRT2DBVuKHAKGl1L_4yszBdIMxk3Yu_7RiZbbUR_yheOpFPPYCekM_vfdmmlsw/exec';
   var API_READY = /^https:\/\/script\.google\.com\//.test(API);
 
   var COLORS = { 'أبيض': '#F7F8FA', 'فضي': '#C3C8CE', 'رمادي': '#8C9299', 'رصاصي': '#5F656C', 'أسود': '#1F2328' };
