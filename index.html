@@ -68,6 +68,19 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 .spin{display:inline-block;width:18px;height:18px;border:2.5px solid currentColor;border-top-color:transparent;border-radius:50%;animation:s .8s linear infinite;vertical-align:-4px}
 @keyframes s{to{transform:rotate(360deg)}}
 .hidden{display:none!important}
+.ph-card{display:flex;flex-direction:column;gap:12px}
+.ph-hint{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
+.ph-pick{display:block;text-align:center;padding:16px;border:2px dashed var(--accent);border-radius:14px;color:var(--accent);font-weight:800;font-size:16px;cursor:pointer;background:var(--accent-soft)}
+.ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
+.ph-grid:empty{display:none}
+.ph-th{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--line);max-width:100%}
+.ph-th img{width:100%;height:100%;object-fit:cover;display:block}
+.ph-th button{position:absolute;top:4px;left:4px;width:26px;height:26px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:14px;cursor:pointer}
+.ph-th .st{position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.55);color:#fff;font-size:11.5px;text-align:center;padding:2px}
+#phNote{width:100%;font:inherit;font-size:15px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
+.ph-card .main{margin-top:0}
+.ph-msg{font-weight:700;font-size:14px;text-align:center;line-height:1.7}
+.ph-msg.ok{color:var(--good)} .ph-msg.bad{color:var(--bad)}
 .contacts{display:none;margin-top:12px}
 .ct{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin-top:8px}
 .ct .nm{flex:1;min-width:0;font-weight:800;font-size:15px}
@@ -125,6 +138,18 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
     <div id="cSwitch" class="hidden"></div>
     <h2>📎 الاستمارة وكارت التشغيل</h2>
     <div id="cFiles"></div>
+    <div id="photoBox" class="hidden">
+      <h2>📸 صور السيارة</h2>
+      <div class="card ph-card">
+        <p class="ph-hint">صوّر العربية من كل الاتجاهات (قدام، ورا، اليمين، الشمال، من جوه، والعداد) وارفع الصور هنا.</p>
+        <label class="ph-pick" for="phInput">📷 اختار أو صوّر الصور</label>
+        <input id="phInput" type="file" accept="image/*" multiple hidden>
+        <div class="ph-grid" id="phGrid"></div>
+        <textarea id="phNote" rows="2" maxlength="200" placeholder="ملاحظة (اختياري) — مثلاً: فيه خدش في الباب اليمين"></textarea>
+        <button class="main" id="phSend" type="button" disabled>إرسال الصور</button>
+        <div class="ph-msg" id="phMsg"></div>
+      </div>
+    </div>
     <h2>📄 الأوراق</h2>
     <div id="cDates"></div>
     <h2>🛢️ تغيير الزيت</h2>
@@ -135,6 +160,8 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 
 <script>
 const SALT = "fleet-drivers-portal-v1";
+const PHOTO_API = "https://script.google.com/macros/s/AKfycbw-uBQ319wfCmhLrUmgyQCsEF8IhDvHPQ43v-TPjYzFYDluzHl95-Jid-76XHSOvtvtIQ/exec";   // رابط سيرفر صور السيارات (Google Apps Script)
+let LOGIN_ID = "";
 const enc = new TextEncoder();
 const $ = id => document.getElementById(id);
 const store = {
@@ -226,6 +253,48 @@ function renderFiles(c){
   }).join("");
   $("cFiles").querySelectorAll("[data-f]").forEach(b => b.addEventListener("click", () => fileAction(+b.dataset.f, b.dataset.m, b)));
 }
+/* ---------- رفع صور السيارة ---------- */
+let PH = [];
+function phRender(){
+  const g = $("phGrid");
+  g.innerHTML = PH.map((p,i) => `<div class="ph-th"><img src="${p.url}" alt="صورة ${i+1}">${p.state ? `<span class="st">${p.state}</span>` : `<button type="button" data-rm="${i}" aria-label="شيل الصورة">✕</button>`}</div>`).join("");
+  g.querySelectorAll("[data-rm]").forEach(b => b.addEventListener("click", () => { URL.revokeObjectURL(PH[+b.dataset.rm].url); PH.splice(+b.dataset.rm, 1); phRender(); }));
+  $("phSend").disabled = !PH.length || PH.some(p => p.state === "⏳");
+  $("phSend").textContent = PH.length ? `إرسال ${PH.length} صورة` : "إرسال الصور";
+}
+async function phShrink(file){
+  const img = await new Promise((res, rej) => { const im = new Image(); im.onload = () => res(im); im.onerror = rej; im.src = URL.createObjectURL(file); });
+  const max = 1600, r = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+  const c = document.createElement("canvas"); c.width = Math.round(img.naturalWidth * r); c.height = Math.round(img.naturalHeight * r);
+  c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(img.src);
+  return c.toDataURL("image/jpeg", 0.8);
+}
+function phInit(){
+  if (!PHOTO_API) return;
+  $("photoBox").classList.remove("hidden");
+  $("phInput").addEventListener("change", e => {
+    [...e.target.files].forEach(f => { if (/^image\//.test(f.type) && PH.length < 20) PH.push({ file: f, url: URL.createObjectURL(f), state: "" }); });
+    e.target.value = ""; $("phMsg").textContent = ""; phRender();
+  });
+  $("phSend").addEventListener("click", async () => {
+    const btn = $("phSend"), msg = $("phMsg"); btn.disabled = true; msg.className = "ph-msg"; msg.textContent = "جاري الرفع...";
+    let ok = 0, bad = 0;
+    for (const p of PH){
+      if (p.state === "✓") { ok++; continue; }
+      p.state = "⏳"; phRender();
+      try{
+        const img = await phShrink(p.file);
+        const r = await fetch(PHOTO_API, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify({ action:"upload", id: LOGIN_ID, plate: CUR.plate, note: $("phNote").value.trim(), img }) });
+        const j = await r.json(); if (!j.ok) throw new Error(j.error || "x");
+        p.state = "✓"; ok++;
+      }catch(e){ p.state = "✗"; bad++; }
+      phRender();
+    }
+    if (!bad){ msg.className = "ph-msg ok"; msg.textContent = `✅ اتبعتت ${ok} صورة — شكرًا ليك`; PH.forEach(p => URL.revokeObjectURL(p.url)); PH = []; $("phNote").value = ""; setTimeout(phRender, 1500); }
+    else { msg.className = "ph-msg bad"; msg.textContent = `اتبعت ${ok} وفشل ${bad} — دوس إرسال تاني علشان يكمّل الباقي`; PH = PH.filter(p => p.state !== "✓"); PH.forEach(p => p.state = ""); phRender(); }
+  });
+}
+phInit();
 function render(c){
   CUR = c;
   c.dates.forEach(x => { if (x.d) x.left = daysLeft(x.d); });
@@ -281,6 +350,7 @@ async function login(digits, iqama, silent){
     const data = await loadData();
     const k = pk + "|" + iq;
     const id = (await sha256hex("id:" + k)).slice(0, 24);
+    LOGIN_ID = id;
     const blob = data.d[id];
     if (!blob){ if (!silent){ showErr("لا يوجد بيانات بهذا الرقم، فضلاً متابعة الشركة أو الاتصال على رقم المسؤول"); showContacts(true); } return false; }
     const raw = Uint8Array.from(atob(blob), ch => ch.charCodeAt(0));
