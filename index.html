@@ -70,7 +70,7 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 .hidden{display:none!important}
 .ph-card{display:flex;flex-direction:column;gap:12px}
 .ph-hint{margin:0;color:var(--muted);font-size:14px;line-height:1.7}
-.ph-pick{display:block;text-align:center;padding:16px;border:2px dashed var(--accent);border-radius:14px;color:var(--accent);font-weight:800;font-size:16px;cursor:pointer;background:var(--accent-soft)}
+.ph-pick{display:block;width:100%;font:inherit;text-align:center;padding:16px;border:2px dashed var(--accent);border-radius:14px;color:var(--accent);font-weight:800;font-size:16px;cursor:pointer;background:var(--accent-soft)}
 .ph-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:8px}
 .ph-grid:empty{display:none}
 .ph-th{position:relative;aspect-ratio:1;border-radius:12px;overflow:hidden;background:var(--bg);border:1px solid var(--line);max-width:100%}
@@ -79,6 +79,14 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 .ph-th .st{position:absolute;inset:auto 0 0 0;background:rgba(0,0,0,.55);color:#fff;font-size:11.5px;text-align:center;padding:2px}
 #phNote{width:100%;font:inherit;font-size:15px;padding:10px 12px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);resize:vertical}
 .ph-card .main{margin-top:0}
+.cam{position:fixed;inset:0;z-index:60;background:#000;display:flex;flex-direction:column}
+.cam video{flex:1;min-height:0;width:100%;object-fit:cover;background:#000}
+.cam .ctl{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px max(20px,env(safe-area-inset-right,0px)) calc(20px + env(safe-area-inset-bottom,0px)) max(20px,env(safe-area-inset-left,0px));background:#000;color:#fff}
+.cam .shot{width:76px;height:76px;border-radius:50%;border:5px solid #fff;background:#fff;box-shadow:inset 0 0 0 4px #000;cursor:pointer}
+.cam .shot:active{transform:scale(.94)}
+.cam .side{min-width:92px;text-align:center;font:inherit;font-weight:800;font-size:15px;color:#fff;background:rgba(255,255,255,.15);border:0;border-radius:12px;padding:10px 12px;cursor:pointer}
+.cam .cnt{position:absolute;top:calc(14px + env(safe-area-inset-top,0px));right:16px;background:rgba(0,0,0,.6);color:#fff;font-weight:800;padding:6px 12px;border-radius:999px}
+.cam .flash{position:absolute;inset:0;background:#fff;opacity:0;pointer-events:none;transition:opacity .15s}
 .ph-msg{font-weight:700;font-size:14px;text-align:center;line-height:1.7}
 .ph-msg.ok{color:var(--good)} .ph-msg.bad{color:var(--bad)}
 .contacts{display:none;margin-top:12px}
@@ -141,8 +149,8 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
     <div id="photoBox" class="hidden">
       <h2>📸 صور السيارة</h2>
       <div class="card ph-card">
-        <p class="ph-hint">صوّر العربية من كل الاتجاهات (قدام، ورا، اليمين، الشمال، من جوه، والعداد). كل ما تدوس الزرار الكاميرا هتفتح، صوّر صورة وارجع دوس تاني للصورة اللي بعدها، وفي الآخر دوس «إرسال».</p>
-        <label class="ph-pick" for="phInput">📷 افتح الكاميرا وصوّر</label>
+        <p class="ph-hint">صوّر العربية من كل الاتجاهات (قدام، ورا، اليمين، الشمال، من جوه، والعداد). دوس الزرار، الكاميرا هتفتح، صوّر كل الصور ورا بعض بالزرار الأبيض، وبعدين دوس «خلصت» وبعدها «إرسال».</p>
+        <button class="ph-pick" id="phCam" type="button">📷 افتح الكاميرا وصوّر</button>
         <input id="phInput" type="file" accept="image/*" capture="environment" hidden>
         <div class="ph-grid" id="phGrid"></div>
         <textarea id="phNote" rows="2" maxlength="200" placeholder="ملاحظة (اختياري) — مثلاً: فيه خدش في الباب اليمين"></textarea>
@@ -269,11 +277,40 @@ async function phShrink(file){
   c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(img.src);
   return c.toDataURL("image/jpeg", 0.8);
 }
+/* كاميرا جوه الصفحة: بتفتح الكاميرا الخلفية على طول، ومفيش اختيار من المعرض */
+async function openCam(){
+  let stream;
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false });
+  }catch(e){
+    // لو المتصفح رفض الكاميرا جوه الصفحة: نفتح كاميرا الجوال نفسها
+    $("phInput").click(); return;
+  }
+  const v = document.createElement("div"); v.className = "cam";
+  v.innerHTML = `<video playsinline autoplay muted></video><div class="cnt">0 صورة</div><div class="flash"></div>
+    <div class="ctl"><button class="side" type="button" data-x>إلغاء</button><button class="shot" type="button" aria-label="صوّر"></button><button class="side" type="button" data-d>خلصت ✓</button></div>`;
+  document.body.appendChild(v);
+  const video = v.querySelector("video"); video.srcObject = stream;
+  let n = 0;
+  const stop = () => { stream.getTracks().forEach(t => t.stop()); v.remove(); phRender(); };
+  v.querySelector("[data-x]").onclick = stop;
+  v.querySelector("[data-d]").onclick = stop;
+  v.querySelector(".shot").onclick = () => {
+    if (!video.videoWidth || PH.length >= 20) return;
+    const c = document.createElement("canvas"); c.width = video.videoWidth; c.height = video.videoHeight;
+    c.getContext("2d").drawImage(video, 0, 0);
+    c.toBlob(b => { if (!b) return; PH.push({ file: b, url: URL.createObjectURL(b), state: "" }); n++; v.querySelector(".cnt").textContent = n + " صورة"; }, "image/jpeg", 0.9);
+    const f = v.querySelector(".flash"); f.style.opacity = .8; setTimeout(() => f.style.opacity = 0, 120);
+    try{ navigator.vibrate && navigator.vibrate(30); }catch(e){}
+  };
+  $("phMsg").textContent = "";
+}
 function phInit(){
   if (!PHOTO_API) return;
   $("photoBox").classList.remove("hidden");
+  $("phCam").addEventListener("click", openCam);
   $("phInput").addEventListener("change", e => {
-    [...e.target.files].forEach(f => { if (/^image\//.test(f.type) && PH.length < 20) PH.push({ file: f, url: URL.createObjectURL(f), state: "" }); });
+    [...e.target.files].forEach(f => { if ((!f.type || /^image\//.test(f.type)) && PH.length < 20) PH.push({ file: f, url: URL.createObjectURL(f), state: "" }); });
     e.target.value = ""; $("phMsg").textContent = ""; phRender();
   });
   $("phSend").addEventListener("click", async () => {
