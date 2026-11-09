@@ -31,7 +31,12 @@ const clean_ = (v, n) => String(v == null ? '' : v).replace(/[<>]/g, '').trim().
 function doGet(e) {
   const p = e.parameter || {};
   if (p.action === 'status') return json_(status_(clean_(p.iq, 10), clean_(p.tok, 40)));
-  return json_({ ok: true, service: 'talabat' });
+  const admin = p.page === 'admin';
+  const t = HtmlService.createTemplateFromFile(admin ? 'admin' : 'driver');   // ملفات driver.html و admin.html من فولدر gas
+  t.url = ScriptApp.getService().getUrl();
+  return t.evaluate().setTitle(admin ? 'إدارة طلبات المناديب' : 'طلبات المناديب')
+    .addMetaTag('viewport', 'width=device-width, initial-scale=1, viewport-fit=cover')
+    .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
 }
 
 function doPost(e) {
