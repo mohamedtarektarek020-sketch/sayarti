@@ -134,8 +134,7 @@ bdi{unicode-bidi:isolate}
   <!-- تم -->
   <section id="vDone" class="hidden">
     <div class="card lift done"><div class="big">✅</div><h2 id="dTitle">تم إرسال طلبك</h2><div class="hint" id="dSub">احتفظ برقم الطلب علشان تتابعه</div><div class="no" id="dNo"></div>
-      <div id="dWa"></div>
-      <button class="main" type="button" data-go="list">طلباتي</button><button class="ghost" style="width:100%;margin-top:10px;padding:12px" type="button" data-go="home">الرجوع للرئيسية</button></div>
+            <button class="main" type="button" data-go="list">طلباتي</button><button class="ghost" style="width:100%;margin-top:10px;padding:12px" type="button" data-go="home">الرجوع للرئيسية</button></div>
   </section>
 
   <!-- طلباتي -->
@@ -145,14 +144,12 @@ bdi{unicode-bidi:isolate}
     <div id="lBox"></div>
   </section>
 
-  <div class="foot">للاستفسار: محمد طارق <bdi dir="ltr">0569148149</bdi></div>
 </div>
 
 <script>
 /* ===== الإعداد ===== */
-// رابط Google Apps Script بعد النشر (Web app). لو فاضي: الطلب بيتبعت واتساب.
+// رابط Google Apps Script بعد النشر (Web app)
 const API = "";
-const WA_TO = "966569148149";
 const SALT = "drivers-requests-v1";
 
 const $ = id => document.getElementById(id);
@@ -185,7 +182,7 @@ async function login(raw, silent) {
   try {
     const data = await loadData();
     const blob = data.d[(await sha256hex("req:" + iq)).slice(0, 24)];
-    if (!blob) { if (!silent) err("err", "رقم الإقامة ده مش مسجل عندنا. اتأكد من الرقم أو كلم المسؤول: محمد طارق 0569148149"); return; }
+    if (!blob) { if (!silent) err("err", "رقم الإقامة ده مش مسجل عندنا. اتأكد من الرقم أو كلم المشرف بتاعك."); return; }
     const rawb = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
     const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: rawb.slice(0, 12) }, await deriveKey(iq), rawb.slice(12));
     ME = JSON.parse(new TextDecoder().decode(plain)); IQ = iq;
@@ -204,32 +201,22 @@ function payload(type) {
   const a = ME.acc && ME.acc[0];
   return { action: "submit", type, iq: IQ, name: ME.n || "", acc: accTxt(), sup: a ? a.s || "" : "", city: ME.c || "" };
 }
-function waLink(p) {
-  const L = [`طلب ${p.type} — من بوابة طلبات المناديب`, `الاسم: ${p.name}`, `الإقامة: ${p.iq}`, p.acc ? `الحساب: ${p.acc}` : "", p.sup ? `المشرف: ${p.sup}` : "", `الجوال: ${p.phone}`,
-    p.type === "سلفة" ? `المبلغ: ${p.amount} ريال` : "", `${p.type === "سلفة" ? "السبب" : "نوع الشكوى"}: ${p.reason}`, p.details ? `التفاصيل: ${p.details}` : ""].filter(Boolean);
-  return "https://wa.me/" + WA_TO + "?text=" + encodeURIComponent(L.join("\n"));
-}
 const ERRS = { limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
 
 async function send(p, btn, errId) {
   err(errId, "");
-  if (!API) { // من غير سيرفر: واتساب
-    $("dTitle").textContent = "خطوة أخيرة"; $("dSub").textContent = "اضغط الزرار الأخضر علشان الطلب يتبعت للمسؤول على واتساب."; $("dNo").textContent = "";
-    $("dNo").classList.add("hidden"); $("dWa").innerHTML = `<a class="wa" href="${waLink(p)}" target="_blank" rel="noopener">إرسال الطلب على واتساب</a>`;
-    show("vDone"); return;
-  }
+  if (!API) { err(errId, "الخدمة لسه بتتجهز — جرّب تاني بعد شوية."); return; }
   const label = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري الإرسال...';
   try {
     const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(p) });
     const j = await r.json();
     if (!j.ok) { err(errId, ERRS[j.err] || "الطلب ماتبعتش — جرّب تاني."); return; }
     $("dTitle").textContent = p.type === "سلفة" ? "تم إرسال طلب السلفة" : "تم إرسال الشكوى"; $("dSub").textContent = "احتفظ برقم الطلب علشان تتابعه من «طلباتي»";
-    $("dNo").classList.remove("hidden"); $("dNo").textContent = j.no; $("dWa").innerHTML = "";
+    $("dNo").classList.remove("hidden"); $("dNo").textContent = j.no;
     ["aAmt", "aDet", "cDet"].forEach(id => $(id).value = ""); $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
     show("vDone");
   } catch (e) {
-    err(errId, "مفيش اتصال بالسيرفر دلوقتي. تقدر تبعت الطلب واتساب:");
-    $(errId).insertAdjacentHTML("beforeend", `<a class="wa" href="${waLink(p)}" target="_blank" rel="noopener">إرسال على واتساب</a>`);
+    err(errId, "مفيش اتصال دلوقتي — اتأكد من النت وجرّب تاني.");
   } finally { btn.disabled = false; btn.textContent = label; }
 }
 const phOk = v => /^0?5\d{8}$/.test(toLatin(v).replace(/\D/g, ""));
@@ -253,7 +240,7 @@ $("cSend").onclick = () => {
 const ST = { "جديد": "s-new", "تحت المراجعة": "s-rev", "تمت الموافقة": "s-ok", "تم الحل": "s-ok", "مرفوض": "s-no" };
 async function loadList() {
   const box = $("lBox");
-  if (!API) { box.innerHTML = '<div class="card hint" style="text-align:center">متابعة الطلبات هتشتغل قريب. لو بعت طلب على واتساب، المسؤول هيرد عليك هناك.</div>'; return; }
+  if (!API) { box.innerHTML = '<div class="card hint" style="text-align:center">متابعة الطلبات هتشتغل قريب.</div>'; return; }
   box.innerHTML = '<div class="card hint" style="text-align:center">جاري التحميل...</div>';
   try {
     const j = await (await fetch(API + "?action=status&iq=" + IQ)).json();

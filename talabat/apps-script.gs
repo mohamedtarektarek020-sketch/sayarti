@@ -7,8 +7,9 @@
 
 const SHEET = 'الطلبات';
 const HEAD = ['رقم الطلب', 'التاريخ', 'النوع', 'رقم الإقامة', 'الاسم', 'المنصة / الحساب', 'المشرف', 'المدينة', 'الجوال',
-  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة'];
+  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد'];
 const STATUSES = ['جديد', 'تحت المراجعة', 'تمت الموافقة', 'مرفوض', 'تم الحل'];
+const ADMIN_PASS = 'غيّر-الكلمة-دي';   // ⚠️ اكتب هنا كلمة سر صفحة الإدارة (8 حروف أو أكتر)
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
 const MAX_PER_DAY = 3;        // أقصى عدد طلبات للمندوب في اليوم
 
@@ -34,6 +35,10 @@ function doGet(e) {
 function doPost(e) {
   let b; try { b = JSON.parse(e.postData.contents); } catch (x) { return json_({ ok: false, err: 'bad' }); }
   if (b.action === 'status') return json_(status_(clean_(b.iq, 10)));
+  if (b.action === 'admin_list' || b.action === 'admin_update') {
+    if (!adminOk_(b.pass)) return json_({ ok: false, err: 'pass' });
+    return json_(b.action === 'admin_list' ? adminList_() : adminUpdate_(b));
+  }
   if (b.action !== 'submit') return json_({ ok: false, err: 'bad' });
   const iq = clean_(b.iq, 10);
   if (!/^[12]\d{9}$/.test(iq)) return json_({ ok: false, err: 'iq' });
@@ -54,7 +59,7 @@ function doPost(e) {
     if (type === 'سلفة' && mine.some(r => r[2] === 'سلفة' && (r[12] === 'جديد' || r[12] === 'تحت المراجعة'))) return json_({ ok: false, err: 'open' });
     const no = (type === 'سلفة' ? 'S' : 'C') + Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyMMdd') + '-' + String(rows.length + 1).padStart(4, '0');
     const row = [no, new Date(), type, "'" + iq, clean_(b.name, 120), clean_(b.acc, 200), clean_(b.sup, 80), clean_(b.city, 60), "'" + clean_(b.phone, 15),
-      amount, clean_(b.reason, 80), details, 'جديد', ''];
+      amount, clean_(b.reason, 80), details, 'جديد', '', ''];
     sh.appendRow(row);
     if (NOTIFY) {
       try {
@@ -76,4 +81,32 @@ function status_(iq) {
     no: r[0], date: Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd'), type: r[2], amount: r[9], reason: r[10], status: r[12] || 'جديد', reply: r[13] || ''
   })).reverse().slice(0, 20);
   return { ok: true, list };
+}
+
+/* ===== صفحة الإدارة ===== */
+function adminOk_(pass) {
+  const c = CacheService.getScriptCache(), k = 'fails';
+  const fails = Number(c.get(k) || 0);
+  if (fails >= 10) return false;                       // بعد 10 محاولات غلط يقفل 10 دقايق
+  if (ADMIN_PASS.length >= 8 && ADMIN_PASS !== 'غيّر-الكلمة-دي' && String(pass) === ADMIN_PASS) return true;
+  c.put(k, String(fails + 1), 600); return false;
+}
+function adminList_() {
+  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
+  if (sh.getLastRow() < 2) return { ok: true, list: [] };
+  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
+  const f = d => d ? Utilities.formatDate(new Date(d), 'Asia/Riyadh', 'yyyy-MM-dd HH:mm') : '';
+  return { ok: true, list: rows.filter(r => r[0]).map(r => ({ no: r[0], date: f(r[1]), type: r[2], iq: String(r[3]), name: r[4], acc: r[5], sup: r[6], city: r[7], phone: String(r[8]),
+    amount: r[9], reason: r[10], details: r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]) })).reverse() };
+}
+function adminUpdate_(b) {
+  if (STATUSES.indexOf(b.status) < 0) return { ok: false, err: 'status' };
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
+    const nos = sh.getRange(2, 1, Math.max(1, sh.getLastRow() - 1), 1).getValues().map(r => String(r[0]));
+    const i = nos.indexOf(String(b.no)); if (i < 0) return { ok: false, err: 'no' };
+    sh.getRange(i + 2, 13, 1, 3).setValues([[b.status, clean_(b.reply, 800), new Date()]]);
+    return { ok: true };
+  } finally { lock.releaseLock(); }
 }
