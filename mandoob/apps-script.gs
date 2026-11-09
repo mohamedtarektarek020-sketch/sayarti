@@ -5,7 +5,9 @@
  *   Execute as: Me   —   Who has access: Anyone
  */
 
+const SS_ID = '';   // رقم الشيت (من رابطه بين /d/ و /edit) — لو الكود متربط بالشيت من Extensions سيبه فاضي
 const SHEET = 'الطلبات';
+const ss_ = () => SS_ID ? SpreadsheetApp.openById(SS_ID) : SpreadsheetApp.getActive();
 const HEAD = ['رقم الطلب', 'التاريخ', 'النوع', 'رقم الإقامة', 'الاسم', 'المنصة / الحساب', 'المشرف', 'المدينة', 'الجوال',
   'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق'];
 const STATUSES = ['جديد', 'تحت المراجعة', 'تمت الموافقة', 'مرفوض', 'تم الحل'];
@@ -14,7 +16,7 @@ const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جدي
 const MAX_PER_DAY = 3;        // أقصى عدد طلبات للمندوب في اليوم
 
 function setup() {
-  const ss = SpreadsheetApp.getActive();
+  const ss = ss_();
   let sh = ss.getSheetByName(SHEET) || ss.insertSheet(SHEET);
   sh.getRange(1, 1, 1, HEAD.length).setValues([HEAD]).setFontWeight('bold').setBackground('#2b2470').setFontColor('#ffffff');
   sh.setFrozenRows(1); sh.setRightToLeft(true);
@@ -51,7 +53,7 @@ function doPost(e) {
 
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
+    const sh = ss_().getSheetByName(SHEET);
     const rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues() : [];
     const today = Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyyy-MM-dd');
     const mine = rows.filter(r => String(r[3]) === iq);
@@ -68,7 +70,7 @@ function doPost(e) {
       try {
         MailApp.sendEmail(Session.getEffectiveUser().getEmail(), `طلب ${type} جديد — ${row[4]} (${no})`,
           `النوع: ${type}\nالاسم: ${row[4]}\nالإقامة: ${iq}\nالحساب: ${row[5]}\nالمشرف: ${row[6]}\nالجوال: ${row[8].slice(1)}\n` +
-          (type === 'سلفة' ? `المبلغ: ${amount} ريال\n` : '') + `السبب / النوع: ${row[10]}\nالتفاصيل: ${details}\n\nافتح الشيت: ${SpreadsheetApp.getActive().getUrl()}`);
+          (type === 'سلفة' ? `المبلغ: ${amount} ريال\n` : '') + `السبب / النوع: ${row[10]}\nالتفاصيل: ${details}\n\nافتح الشيت: ${ss_().getUrl()}`);
       } catch (x) {}
     }
     return json_({ ok: true, no });
@@ -77,7 +79,7 @@ function doPost(e) {
 
 function status_(iq, tok) {
   if (!/^[12]\d{9}$/.test(iq) || !/^[0-9a-f]{32}$/.test(tok || '')) return { ok: false, err: 'iq' };
-  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
+  const sh = ss_().getSheetByName(SHEET);
   if (sh.getLastRow() < 2) return { ok: true, list: [] };
   const rows = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
   const list = rows.filter(r => String(r[3]) === iq && String(r[15]) === tok).map(r => ({
@@ -95,7 +97,7 @@ function adminOk_(pass) {
   c.put(k, String(fails + 1), 600); return false;
 }
 function adminList_() {
-  const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
+  const sh = ss_().getSheetByName(SHEET);
   if (sh.getLastRow() < 2) return { ok: true, list: [] };
   const rows = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
   const f = d => d ? Utilities.formatDate(new Date(d), 'Asia/Riyadh', 'yyyy-MM-dd HH:mm') : '';
@@ -106,7 +108,7 @@ function adminUpdate_(b) {
   if (STATUSES.indexOf(b.status) < 0) return { ok: false, err: 'status' };
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
-    const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
+    const sh = ss_().getSheetByName(SHEET);
     const nos = sh.getRange(2, 1, Math.max(1, sh.getLastRow() - 1), 1).getValues().map(r => String(r[0]));
     const i = nos.indexOf(String(b.no)); if (i < 0) return { ok: false, err: 'no' };
     sh.getRange(i + 2, 13, 1, 3).setValues([[b.status, clean_(b.reply, 800), new Date()]]);
