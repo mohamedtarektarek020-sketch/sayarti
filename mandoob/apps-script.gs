@@ -7,7 +7,7 @@
 
 const SHEET = 'الطلبات';
 const HEAD = ['رقم الطلب', 'التاريخ', 'النوع', 'رقم الإقامة', 'الاسم', 'المنصة / الحساب', 'المشرف', 'المدينة', 'الجوال',
-  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد'];
+  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق'];
 const STATUSES = ['جديد', 'تحت المراجعة', 'تمت الموافقة', 'مرفوض', 'تم الحل'];
 const ADMIN_PASS = 'غيّر-الكلمة-دي';   // ⚠️ اكتب هنا كلمة سر صفحة الإدارة (8 حروف أو أكتر)
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
@@ -20,7 +20,7 @@ function setup() {
   sh.setFrozenRows(1); sh.setRightToLeft(true);
   const rule = SpreadsheetApp.newDataValidation().requireValueInList(STATUSES, true).build();
   sh.getRange(2, 13, 2000, 1).setDataValidation(rule);
-  sh.setColumnWidths(1, HEAD.length, 130); sh.setColumnWidth(12, 320); sh.setColumnWidth(14, 260);
+  sh.setColumnWidths(1, HEAD.length, 130); sh.setColumnWidth(12, 320); sh.setColumnWidth(14, 260); sh.hideColumns(16);
 }
 
 function json_(o) { return ContentService.createTextOutput(JSON.stringify(o)).setMimeType(ContentService.MimeType.JSON); }
@@ -28,13 +28,13 @@ const clean_ = (v, n) => String(v == null ? '' : v).replace(/[<>]/g, '').trim().
 
 function doGet(e) {
   const p = e.parameter || {};
-  if (p.action === 'status') return json_(status_(clean_(p.iq, 10)));
+  if (p.action === 'status') return json_(status_(clean_(p.iq, 10), clean_(p.tok, 40)));
   return json_({ ok: true, service: 'talabat' });
 }
 
 function doPost(e) {
   let b; try { b = JSON.parse(e.postData.contents); } catch (x) { return json_({ ok: false, err: 'bad' }); }
-  if (b.action === 'status') return json_(status_(clean_(b.iq, 10)));
+  if (b.action === 'status') return json_(status_(clean_(b.iq, 10), clean_(b.tok, 40)));
   if (b.action === 'admin_list' || b.action === 'admin_update') {
     if (!adminOk_(b.pass)) return json_({ ok: false, err: 'pass' });
     return json_(b.action === 'admin_list' ? adminList_() : adminUpdate_(b));
@@ -55,11 +55,14 @@ function doPost(e) {
     const rows = sh.getLastRow() > 1 ? sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues() : [];
     const today = Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyyy-MM-dd');
     const mine = rows.filter(r => String(r[3]) === iq);
+    const tok = clean_(b.tok, 40);
+    if (!/^[0-9a-f]{32}$/.test(tok)) return json_({ ok: false, err: 'tok' });
+    if (mine.some(r => r[15] && String(r[15]) !== tok)) return json_({ ok: false, err: 'tok' });
     if (mine.filter(r => Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd') === today).length >= MAX_PER_DAY) return json_({ ok: false, err: 'limit' });
     if (type === 'سلفة' && mine.some(r => r[2] === 'سلفة' && (r[12] === 'جديد' || r[12] === 'تحت المراجعة'))) return json_({ ok: false, err: 'open' });
     const no = (type === 'سلفة' ? 'S' : 'C') + Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyMMdd') + '-' + String(rows.length + 1).padStart(4, '0');
     const row = [no, new Date(), type, "'" + iq, clean_(b.name, 120), clean_(b.acc, 200), clean_(b.sup, 80), clean_(b.city, 60), "'" + clean_(b.phone, 15),
-      amount, clean_(b.reason, 80), details, 'جديد', '', ''];
+      amount, clean_(b.reason, 80), details, 'جديد', '', '', tok];
     sh.appendRow(row);
     if (NOTIFY) {
       try {
@@ -72,12 +75,12 @@ function doPost(e) {
   } finally { lock.releaseLock(); }
 }
 
-function status_(iq) {
-  if (!/^[12]\d{9}$/.test(iq)) return { ok: false, err: 'iq' };
+function status_(iq, tok) {
+  if (!/^[12]\d{9}$/.test(iq) || !/^[0-9a-f]{32}$/.test(tok || '')) return { ok: false, err: 'iq' };
   const sh = SpreadsheetApp.getActive().getSheetByName(SHEET);
   if (sh.getLastRow() < 2) return { ok: true, list: [] };
   const rows = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
-  const list = rows.filter(r => String(r[3]) === iq).map(r => ({
+  const list = rows.filter(r => String(r[3]) === iq && String(r[15]) === tok).map(r => ({
     no: r[0], date: Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd'), type: r[2], amount: r[9], reason: r[10], status: r[12] || 'جديد', reply: r[13] || ''
   })).reverse().slice(0, 20);
   return { ok: true, list };

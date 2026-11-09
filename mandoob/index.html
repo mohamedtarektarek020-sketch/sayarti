@@ -76,6 +76,9 @@ h2{font-size:18px;margin:0 0 4px;font-weight:800}
 .spin{display:inline-block;width:16px;height:16px;border:2.5px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:sp 1s linear infinite;vertical-align:-3px}
 @keyframes sp{to{transform:rotate(360deg)}}
 @media (prefers-reduced-motion:reduce){.spin{animation-duration:3s}}
+/* birth */
+.bd{display:grid;grid-template-columns:1fr 1.4fr 1.2fr;gap:8px}
+.bd select{text-align:center;padding:12px 6px}
 .foot{text-align:center;color:var(--muted);font-size:12.5px;margin-top:24px;line-height:1.8}
 bdi{unicode-bidi:isolate}
 </style>
@@ -88,8 +91,13 @@ bdi{unicode-bidi:isolate}
   <section id="vLogin" class="card lift">
     <label for="iqama">رقم الإقامة</label>
     <input id="iqama" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="2xxxxxxxxx">
-    <div class="hint">اكتب رقم الإقامة بتاعك (10 أرقام) علشان تدخل.</div>
-    <button class="main" id="goBtn" type="button">دخول</button>
+    <div class="hint" id="iqHint">اكتب رقم الإقامة بتاعك (10 أرقام) علشان تدخل.</div>
+    <div id="bdBox" class="hidden">
+      <label>تاريخ الميلاد (زي ما هو في الإقامة)</label>
+      <div class="bd"><select id="bdD" aria-label="اليوم"></select><select id="bdM" aria-label="الشهر"></select><select id="bdY" aria-label="السنة"></select></div>
+      <div class="hint">للتأكد إنك صاحب الإقامة.</div>
+    </div>
+    <button class="main" id="goBtn" type="button">التالي</button>
     <div class="err" id="err"></div>
   </section>
 
@@ -174,34 +182,60 @@ function show(v) {
 function err(id, m) { const e = $(id); e.textContent = m || ""; e.style.display = m ? "block" : "none"; }
 const accTxt = () => (ME.acc || []).map(a => a.p + " " + a.id).join(" + ");
 
-async function login(raw, silent) {
+const MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
+(() => {
+  $("bdD").innerHTML = '<option value="">اليوم</option>' + Array.from({ length: 31 }, (_, i) => `<option value="${String(i + 1).padStart(2, "0")}">${i + 1}</option>`).join("");
+  $("bdM").innerHTML = '<option value="">الشهر</option>' + MONTHS.map((m, i) => `<option value="${String(i + 1).padStart(2, "0")}">${i + 1} - ${m}</option>`).join("");
+  const y = new Date().getFullYear(); let o = '<option value="">السنة</option>'; for (let k = y - 16; k >= y - 75; k--) o += `<option>${k}</option>`; $("bdY").innerHTML = o;
+})();
+let PEND = null; // {iq, blob, needBd}
+function resetLogin() { PEND = null; $("bdBox").classList.add("hidden"); $("iqHint").classList.remove("hidden"); $("goBtn").textContent = "التالي"; ["bdD", "bdM", "bdY"].forEach(x => $(x).value = ""); }
+async function openBlob(iq, blob, secret) {
+  const rawb = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
+  const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: rawb.slice(0, 12) }, await deriveKey(secret), rawb.slice(12));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+function enter(iq, obj, tok) {
+  ME = obj; IQ = iq; TOK = tok;
+  store.set("tq_s", JSON.stringify({ iq, tok, s: SECRET }));
+  $("whoName").textContent = ME.n || "مندوب";
+  const a = ME.acc && ME.acc[0];
+  $("whoMeta").innerHTML = [`الإقامة: <bdi dir="ltr">${iq}</bdi>`, ME.acc && ME.acc.length ? esc(ME.acc.map(x => x.p).join(" + ")) : "", a && a.s ? "المشرف: " + esc(a.s) : ""].filter(Boolean).join(" · ");
+  const ph = ME.ph ? "0" + String(ME.ph).replace(/^0+/, "") : ""; $("aPh").value = ph; $("cPh").value = ph;
+  $("heroSub").textContent = "أهلاً " + String(ME.n || "").split(" ")[0];
+  resetLogin(); show("vHome");
+}
+let TOK = "", SECRET = "";
+async function login(raw) {
   err("err", "");
-  const iq = toLatin(raw).replace(/\D/g, "");
-  if (!/^[12]\d{9}$/.test(iq)) { if (!silent) err("err", "رقم الإقامة لازم يكون 10 أرقام ويبدأ بـ 1 أو 2"); return; }
-  const b = $("goBtn"); b.disabled = true; b.innerHTML = '<span class="spin"></span> جاري الدخول...';
+  const b = $("goBtn");
   try {
+    if (PEND && PEND.needBd) { // الخطوة التانية: تاريخ الميلاد
+      const d = $("bdD").value, m = $("bdM").value, y = $("bdY").value;
+      if (!d || !m || !y) { err("err", "اختار اليوم والشهر والسنة."); return; }
+      b.disabled = true; b.innerHTML = '<span class="spin"></span> جاري التحقق...';
+      const secret = PEND.iq + "|" + y + "-" + m + "-" + d;
+      let obj; try { obj = await openBlob(PEND.iq, PEND.blob, secret); } catch (e) { err("err", "تاريخ الميلاد مش مطابق لبيانات الإقامة. اتأكد منه وجرّب تاني، ولو المشكلة مستمرة كلم المشرف بتاعك."); return; }
+      SECRET = secret; enter(PEND.iq, obj, (await sha256hex("tok:" + secret)).slice(0, 32)); return;
+    }
+    const iq = toLatin(raw).replace(/\D/g, "");
+    if (!/^[12]\d{9}$/.test(iq)) { err("err", "رقم الإقامة لازم يكون 10 أرقام ويبدأ بـ 1 أو 2"); return; }
+    b.disabled = true; b.innerHTML = '<span class="spin"></span> جاري البحث...';
     const data = await loadData();
-    const blob = data.d[(await sha256hex("req:" + iq)).slice(0, 24)];
-    if (!blob) { if (!silent) err("err", "رقم الإقامة ده مش مسجل عندنا. اتأكد من الرقم أو كلم المشرف بتاعك."); return; }
-    const rawb = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
-    const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: rawb.slice(0, 12) }, await deriveKey(iq), rawb.slice(12));
-    ME = JSON.parse(new TextDecoder().decode(plain)); IQ = iq;
-    store.set("tq_iq", iq);
-    $("whoName").textContent = ME.n || "مندوب";
-    const a = ME.acc && ME.acc[0];
-    $("whoMeta").innerHTML = [`الإقامة: <bdi dir="ltr">${iq}</bdi>`, ME.acc && ME.acc.length ? esc(ME.acc.map(x => x.p).join(" + ")) : "", a && a.s ? "المشرف: " + esc(a.s) : ""].filter(Boolean).join(" · ");
-    const ph = ME.ph ? "0" + String(ME.ph).replace(/^0+/, "") : ""; $("aPh").value = ph; $("cPh").value = ph;
-    $("heroSub").textContent = "أهلاً " + String(ME.n || "").split(" ")[0];
-    show("vHome");
-  } catch (e) { if (!silent) err("err", "حصلت مشكلة في التحميل — جرّب تاني بعد شوية"); }
-  finally { b.disabled = false; b.textContent = "دخول"; }
+    const rec = data.d[(await sha256hex("req:" + iq)).slice(0, 24)];
+    if (!rec) { err("err", "رقم الإقامة ده مش مسجل عندنا. اتأكد من الرقم أو كلم المشرف بتاعك."); return; }
+    const needBd = rec.startsWith("b:"), blob = rec.slice(2);
+    if (needBd) { PEND = { iq, blob, needBd }; $("iqHint").classList.add("hidden"); $("bdBox").classList.remove("hidden"); return; }
+    SECRET = iq; enter(iq, await openBlob(iq, blob, iq), (await sha256hex("tok:" + iq)).slice(0, 32));
+  } catch (e) { err("err", "حصلت مشكلة في التحميل — جرّب تاني بعد شوية"); }
+  finally { b.disabled = false; b.textContent = PEND && PEND.needBd ? "دخول" : "التالي"; }
 }
 
 function payload(type) {
   const a = ME.acc && ME.acc[0];
-  return { action: "submit", type, iq: IQ, name: ME.n || "", acc: accTxt(), sup: a ? a.s || "" : "", city: ME.c || "" };
+  return { action: "submit", type, iq: IQ, tok: TOK, name: ME.n || "", acc: accTxt(), sup: a ? a.s || "" : "", city: ME.c || "" };
 }
-const ERRS = { limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
+const ERRS = { tok: "البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
 
 async function send(p, btn, errId) {
   err(errId, "");
@@ -243,7 +277,7 @@ async function loadList() {
   if (!API) { box.innerHTML = '<div class="card hint" style="text-align:center">متابعة الطلبات هتشتغل قريب.</div>'; return; }
   box.innerHTML = '<div class="card hint" style="text-align:center">جاري التحميل...</div>';
   try {
-    const j = await (await fetch(API + "?action=status&iq=" + IQ)).json();
+    const j = await (await fetch(API + "?action=status&iq=" + IQ + "&tok=" + TOK)).json();
     if (!j.ok) throw 0;
     box.innerHTML = j.list.length ? j.list.map(r => `<div class="req"><div class="top"><div class="t1">${r.type === "سلفة" ? "💰 سلفة" + (r.amount ? " — " + Number(r.amount).toLocaleString("en-US") + " ريال" : "") : "📝 شكوى — " + esc(r.reason)}</div><span class="pill ${ST[r.status] || "s-new"}">${esc(r.status)}</span></div>
       <div class="t2">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>رد الإدارة:</b> ${esc(r.reply)}</div>` : ""}</div>`).join("")
@@ -258,8 +292,10 @@ document.addEventListener("click", e => {
 });
 $("goBtn").onclick = () => login($("iqama").value);
 $("iqama").addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); });
-$("outBtn").onclick = () => { store.del("tq_iq"); ME = null; IQ = ""; $("iqama").value = ""; $("heroSub").textContent = "طلب سلفة أو تقديم شكوى"; show("vLogin"); };
-(() => { const s = store.get("tq_iq"); if (s) { $("iqama").value = s; login(s, true); } })();
+$("outBtn").onclick = () => { store.del("tq_s"); ME = null; IQ = ""; TOK = ""; SECRET = ""; $("iqama").value = ""; $("heroSub").textContent = "طلب سلفة أو تقديم شكوى"; resetLogin(); show("vLogin"); };
+$("iqama").addEventListener("input", () => { if (PEND) resetLogin(); });
+(async () => { try { const s = JSON.parse(store.get("tq_s") || "null"); if (!s) return; const data = await loadData(); const rec = data.d[(await sha256hex("req:" + s.iq)).slice(0, 24)]; if (!rec) return;
+  SECRET = s.s; enter(s.iq, await openBlob(s.iq, rec.slice(2), s.s), s.tok); } catch (e) { store.del("tq_s"); } })();
 </script>
 </body>
 </html>
