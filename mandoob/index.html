@@ -57,7 +57,7 @@ button{font:inherit;cursor:pointer}
 .choice .ic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
 .choice .t1{font-weight:800;font-size:17px}
 .choice .t2{color:var(--muted);font-size:13.5px;margin-top:3px}
-.ic.m{background:var(--money-bg)} .ic.c{background:var(--warn-bg)} .ic.l{background:var(--accent-soft)}
+.ic.b{background:var(--good-bg)} .ic.m{background:var(--money-bg)} .ic.c{background:var(--warn-bg)} .ic.l{background:var(--accent-soft)}
 .back{display:inline-flex;align-items:center;gap:6px;margin:16px 4px 10px;background:none;border:0;color:var(--muted);font-weight:700;font-size:14.5px;padding:0}
 h2{font-size:18px;margin:0 0 4px;font-weight:800}
 .chk{display:flex;gap:10px;align-items:flex-start;margin-top:14px;font-size:14px;line-height:1.6;font-weight:500}
@@ -107,6 +107,7 @@ bdi{unicode-bidi:isolate}
     <div class="choices">
       <button class="choice" type="button" data-go="adv"><span class="ic m">💰</span><span><div class="t1">طلب سلفة</div><div class="t2">اطلب مبلغ مقدم وبيتخصم من راتبك</div></span></button>
       <button class="choice" type="button" data-go="cmp"><span class="ic c">📝</span><span><div class="t1">تقديم شكوى</div><div class="t2">راتب، خصم، بنزين، سيارة، مشرف أو أي مشكلة</div></span></button>
+      <button class="choice" type="button" data-go="iban"><span class="ic b">🏦</span><span><div class="t1">الآيبان (الحساب البنكي)</div><div class="t2">سجّل أو حدّث رقم الآيبان علشان التحويلات</div></span></button>
       <button class="choice" type="button" data-go="list"><span class="ic l">📋</span><span><div class="t1">طلباتي</div><div class="t2">تابع حالة الطلبات اللي قدمتها</div></span></button>
     </div>
   </section>
@@ -136,6 +137,24 @@ bdi{unicode-bidi:isolate}
       <label for="cPh">رقم الجوال</label><input id="cPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
       <button class="main" id="cSend" type="button">إرسال الشكوى</button>
       <div class="err" id="cErr"></div>
+    </div>
+  </section>
+
+  <!-- الآيبان -->
+  <section id="vIban" class="hidden">
+    <button class="back" type="button" data-go="home">→ رجوع</button>
+    <div class="card"><h2>🏦 الآيبان</h2>
+      <div class="hint" id="ibNow" style="margin-top:6px"></div>
+      <label for="iIban">رقم الآيبان (24 خانة، بيبدأ بـ SA)</label>
+      <input id="iIban" dir="ltr" autocomplete="off" autocapitalize="characters" maxlength="34" placeholder="SA00 0000 0000 0000 0000 0000" style="text-align:left;letter-spacing:.5px">
+      <div class="hint" id="ibBank"></div>
+      <label for="iHolder">الحساب باسم مين؟</label>
+      <select id="iHolder"><option value="me">باسمي أنا</option><option value="other">باسم شخص تاني</option></select>
+      <div id="iOtherBox" class="hidden"><label for="iOther">اسم صاحب الحساب</label><input id="iOther" maxlength="80" style="text-align:start"></div>
+      <label for="iPh">رقم الجوال</label><input id="iPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
+      <label class="chk"><input type="checkbox" id="iOk"> أقر إن بيانات الحساب البنكي دي صحيحة، وموافق إن التحويلات تنزل عليه.</label>
+      <button class="main" id="iSend" type="button">حفظ الآيبان</button>
+      <div class="err" id="iErr"></div>
     </div>
   </section>
 
@@ -176,7 +195,7 @@ let DATA = null;
 async function loadData() { if (DATA) return DATA; const r = await fetch("data.json?t=" + Date.now(), { cache: "no-store" }); if (!r.ok) throw new Error("data"); DATA = await r.json(); return DATA; }
 
 function show(v) {
-  ["vLogin", "vHome", "vAdv", "vCmp", "vDone", "vList"].forEach(x => $(x).classList.toggle("hidden", x !== v));
+  ["vLogin", "vHome", "vAdv", "vCmp", "vIban", "vDone", "vList"].forEach(x => $(x).classList.toggle("hidden", x !== v));
   window.scrollTo(0, 0);
 }
 function err(id, m) { const e = $(id); e.textContent = m || ""; e.style.display = m ? "block" : "none"; }
@@ -201,7 +220,7 @@ function enter(iq, obj, tok) {
   $("whoName").textContent = ME.n || "مندوب";
   const a = ME.acc && ME.acc[0];
   $("whoMeta").innerHTML = [`الإقامة: <bdi dir="ltr">${iq}</bdi>`, ME.acc && ME.acc.length ? esc(ME.acc.map(x => x.p).join(" + ")) : "", a && a.s ? "المشرف: " + esc(a.s) : ""].filter(Boolean).join(" · ");
-  const ph = ME.ph ? "0" + String(ME.ph).replace(/^0+/, "") : ""; $("aPh").value = ph; $("cPh").value = ph;
+  const ph = ME.ph ? "0" + String(ME.ph).replace(/^0+/, "") : ""; $("aPh").value = ph; $("cPh").value = ph; $("iPh").value = ph;
   $("heroSub").textContent = "أهلاً " + String(ME.n || "").split(" ")[0];
   resetLogin(); show("vHome");
 }
@@ -235,7 +254,7 @@ function payload(type) {
   const a = ME.acc && ME.acc[0];
   return { action: "submit", type, iq: IQ, tok: TOK, name: ME.n || "", acc: accTxt(), sup: a ? a.s || "" : "", city: ME.c || "" };
 }
-const ERRS = { tok: "البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
+const ERRS = { tok: "البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", iban: "رقم الآيبان مش صحيح — راجعه من تطبيق البنك.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
 
 async function send(p, btn, errId) {
   err(errId, "");
@@ -245,9 +264,9 @@ async function send(p, btn, errId) {
     const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(p) });
     const j = await r.json();
     if (!j.ok) { err(errId, ERRS[j.err] || "الطلب ماتبعتش — جرّب تاني."); return; }
-    $("dTitle").textContent = p.type === "سلفة" ? "تم إرسال طلب السلفة" : "تم إرسال الشكوى"; $("dSub").textContent = "احتفظ برقم الطلب علشان تتابعه من «طلباتي»";
+    $("dTitle").textContent = p.type === "سلفة" ? "تم إرسال طلب السلفة" : p.type === "آيبان" ? "تم إرسال الآيبان" : "تم إرسال الشكوى"; $("dSub").textContent = "احتفظ برقم الطلب علشان تتابعه من «طلباتي»";
     $("dNo").classList.remove("hidden"); $("dNo").textContent = j.no;
-    ["aAmt", "aDet", "cDet"].forEach(id => $(id).value = ""); $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
+    ["aAmt", "aDet", "cDet", "iIban", "iOther"].forEach(id => $(id).value = ""); $("iOk").checked = false; $("ibBank").textContent = ""; $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
     show("vDone");
   } catch (e) {
     err(errId, "مفيش اتصال دلوقتي — اتأكد من النت وجرّب تاني.");
@@ -271,6 +290,29 @@ $("cSend").onclick = () => {
   send(Object.assign(payload("شكوى"), { reason: $("cCat").value, details: $("cDet").value.trim(), phone: toLatin($("cPh").value).replace(/\D/g, "") }), $("cSend"), "cErr");
 };
 
+/* ===== الآيبان ===== */
+const BANKS = { "05": "مصرف الإنماء", "10": "البنك الأهلي السعودي", "15": "بنك البلاد", "20": "بنك الرياض", "30": "البنك العربي الوطني", "40": "البنك الأهلي السعودي (سامبا)", "45": "البنك السعودي الأول (ساب)", "50": "البنك السعودي الأول (الأول)", "55": "البنك السعودي الفرنسي", "60": "بنك الجزيرة", "65": "البنك السعودي للاستثمار", "71": "بنك الخليج الدولي", "76": "بنك مسقط", "80": "مصرف الراجحي", "90": "بنك الخليج الدولي", "95": "بنك الإمارات دبي الوطني" };
+const ibClean = v => toLatin(v).toUpperCase().replace(/[^A-Z0-9]/g, "");
+function ibOk(v) {
+  const x = ibClean(v); if (!/^SA\d{22}$/.test(x)) return false;
+  const r = x.slice(4) + x.slice(0, 4); let m = 0;
+  for (const ch of r) { const n = /[A-Z]/.test(ch) ? String(ch.charCodeAt(0) - 55) : ch; for (const d of n) m = (m * 10 + +d) % 97; }
+  return m === 1;
+}
+const ibBank = v => { const x = ibClean(v); return /^SA\d{4}/.test(x) ? (BANKS[x.slice(4, 6)] || "بنك آخر") : ""; };
+const ibFmt = x => x.replace(/(.{4})/g, "$1 ").trim();
+$("iIban").addEventListener("input", () => { const x = ibClean($("iIban").value); $("ibBank").textContent = x.length >= 6 ? (ibBank(x) + (x.length === 24 ? (ibOk(x) ? " ✔ الرقم صحيح" : " ✖ الرقم فيه غلط") : "")) : ""; });
+$("iHolder").onchange = () => $("iOtherBox").classList.toggle("hidden", $("iHolder").value !== "other");
+$("iSend").onclick = () => {
+  const x = ibClean($("iIban").value);
+  if (!ibOk(x)) return err("iErr", "رقم الآيبان مش صحيح. لازم يبدأ بـ SA وبعده 22 رقم — انسخه من تطبيق البنك.");
+  const other = $("iHolder").value === "other", holder = other ? $("iOther").value.trim() : (ME.n || "");
+  if (other && holder.length < 3) return err("iErr", "اكتب اسم صاحب الحساب.");
+  if (!phOk($("iPh").value)) return err("iErr", "اكتب رقم جوال صحيح (05xxxxxxxx).");
+  if (!$("iOk").checked) return err("iErr", "لازم تأكد إن بيانات الحساب صحيحة.");
+  send(Object.assign(payload("آيبان"), { iban: x, reason: ibBank(x), holder, details: "الآيبان: " + ibFmt(x) + " — صاحب الحساب: " + holder + (other ? " (مش باسم المندوب)" : ""), phone: toLatin($("iPh").value).replace(/\D/g, "") }), $("iSend"), "iErr");
+};
+
 const ST = { "جديد": "s-new", "تحت المراجعة": "s-rev", "تمت الموافقة": "s-ok", "تم الحل": "s-ok", "مرفوض": "s-no" };
 async function loadList() {
   const box = $("lBox");
@@ -279,7 +321,7 @@ async function loadList() {
   try {
     const j = await (await fetch(API + "?action=status&iq=" + IQ + "&tok=" + TOK)).json();
     if (!j.ok) throw 0;
-    box.innerHTML = j.list.length ? j.list.map(r => `<div class="req"><div class="top"><div class="t1">${r.type === "سلفة" ? "💰 سلفة" + (r.amount ? " — " + Number(r.amount).toLocaleString("en-US") + " ريال" : "") : "📝 شكوى — " + esc(r.reason)}</div><span class="pill ${ST[r.status] || "s-new"}">${esc(r.status)}</span></div>
+    box.innerHTML = j.list.length ? j.list.map(r => `<div class="req"><div class="top"><div class="t1">${r.type === "سلفة" ? "💰 سلفة" + (r.amount ? " — " + Number(r.amount).toLocaleString("en-US") + " ريال" : "") : r.type === "آيبان" ? "🏦 آيبان — " + esc(r.reason) : "📝 شكوى — " + esc(r.reason)}</div><span class="pill ${ST[r.status] || "s-new"}">${esc(r.status)}</span></div>
       <div class="t2">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>رد الإدارة:</b> ${esc(r.reply)}</div>` : ""}</div>`).join("")
       : '<div class="card hint" style="text-align:center">لسه مقدمتش أي طلبات.</div>';
   } catch (e) { box.innerHTML = '<div class="card hint" style="text-align:center">مقدرناش نجيب الطلبات دلوقتي — جرّب تاني بعد شوية.</div>'; }
@@ -288,7 +330,7 @@ async function loadList() {
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-go]"); if (!b) return;
   const g = b.dataset.go;
-  if (g === "home") show("vHome"); else if (g === "adv") { err("aErr", ""); show("vAdv"); } else if (g === "cmp") { err("cErr", ""); show("vCmp"); } else if (g === "list") { show("vList"); loadList(); }
+  if (g === "home") show("vHome"); else if (g === "adv") { err("aErr", ""); show("vAdv"); } else if (g === "cmp") { err("cErr", ""); show("vCmp"); } else if (g === "list") { show("vList"); loadList(); } else if (g === "iban") { err("iErr", ""); $("ibNow").textContent = ME.ib ? "الآيبان المسجل عندنا حاليًا بينتهي بـ " + ME.ib + " — لو اتغيّر سجّل الجديد." : "مافيش آيبان مسجل عندنا ليك — سجّله هنا."; show("vIban"); }
 });
 $("goBtn").onclick = () => login($("iqama").value);
 $("iqama").addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); });

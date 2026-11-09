@@ -49,12 +49,14 @@ function doPost(e) {
   if (b.action !== 'submit') return json_({ ok: false, err: 'bad' });
   const iq = clean_(b.iq, 10);
   if (!/^[12]\d{9}$/.test(iq)) return json_({ ok: false, err: 'iq' });
-  const type = b.type === 'سلفة' ? 'سلفة' : b.type === 'شكوى' ? 'شكوى' : '';
+  const type = ['سلفة', 'شكوى', 'آيبان'].indexOf(b.type) >= 0 ? b.type : '';
   if (!type) return json_({ ok: false, err: 'type' });
   const amount = type === 'سلفة' ? Math.round(Number(b.amount) || 0) : '';
   if (type === 'سلفة' && !(amount > 0 && amount <= 20000)) return json_({ ok: false, err: 'amount' });
   const details = clean_(b.details, 1500);
   if (type === 'شكوى' && details.length < 5) return json_({ ok: false, err: 'details' });
+  const iban = type === 'آيبان' ? String(b.iban || '').toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
+  if (type === 'آيبان' && !ibanOk_(iban)) return json_({ ok: false, err: 'iban' });
 
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -67,10 +69,11 @@ function doPost(e) {
     if (mine.some(r => r[15] && String(r[15]) !== tok)) return json_({ ok: false, err: 'tok' });
     if (mine.filter(r => Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd') === today).length >= MAX_PER_DAY) return json_({ ok: false, err: 'limit' });
     if (type === 'سلفة' && mine.some(r => r[2] === 'سلفة' && (r[12] === 'جديد' || r[12] === 'تحت المراجعة'))) return json_({ ok: false, err: 'open' });
-    const no = (type === 'سلفة' ? 'S' : 'C') + Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyMMdd') + '-' + String(rows.length + 1).padStart(4, '0');
+    const no = (type === 'سلفة' ? 'S' : type === 'آيبان' ? 'B' : 'C') + Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyMMdd') + '-' + String(rows.length + 1).padStart(4, '0');
     const row = [no, new Date(), type, "'" + iq, clean_(b.name, 120), clean_(b.acc, 200), clean_(b.sup, 80), clean_(b.city, 60), "'" + clean_(b.phone, 15),
       amount, clean_(b.reason, 80), details, 'جديد', '', '', tok];
     sh.appendRow(row);
+    if (type === 'آيبان') saveIban_(iq, row[4], iban, clean_(b.reason, 60), clean_(b.holder, 80), row[8].slice(1), no);
     if (NOTIFY) {
       try {
         MailApp.sendEmail(Session.getEffectiveUser().getEmail(), `طلب ${type} جديد — ${row[4]} (${no})`,
@@ -119,4 +122,20 @@ function adminUpdate_(b) {
     sh.getRange(i + 2, 13, 1, 3).setValues([[b.status, clean_(b.reply, 800), new Date()]]);
     return { ok: true };
   } finally { lock.releaseLock(); }
+}
+
+/* ===== الآيبانات ===== */
+function ibanOk_(x) {
+  if (!/^SA\d{22}$/.test(x)) return false;
+  const r = x.slice(4) + x.slice(0, 4); let m = 0;
+  for (const ch of r) { const n = /[A-Z]/.test(ch) ? String(ch.charCodeAt(0) - 55) : ch; for (const d of n) m = (m * 10 + Number(d)) % 97; }
+  return m === 1;
+}
+function saveIban_(iq, name, iban, bank, holder, phone, no) {
+  const ss = ss_(); let sh = ss.getSheetByName('الآيبانات');
+  if (!sh) { sh = ss.insertSheet('الآيبانات'); sh.getRange(1, 1, 1, 8).setValues([['رقم الإقامة', 'الاسم', 'الآيبان', 'البنك', 'صاحب الحساب', 'الجوال', 'آخر تحديث', 'رقم الطلب']]).setFontWeight('bold').setBackground('#15803d').setFontColor('#ffffff'); sh.setFrozenRows(1); sh.setRightToLeft(true); sh.setColumnWidth(3, 230); }
+  const row = ["'" + iq, name, "'" + iban, bank, holder, "'" + phone, new Date(), no];
+  const n = sh.getLastRow(); const iqs = n > 1 ? sh.getRange(2, 1, n - 1, 1).getValues().map(r => String(r[0])) : [];
+  const i = iqs.indexOf(iq);
+  if (i >= 0) sh.getRange(i + 2, 1, 1, 8).setValues([row]); else sh.appendRow(row);
 }
