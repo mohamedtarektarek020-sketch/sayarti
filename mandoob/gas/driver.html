@@ -125,9 +125,7 @@ bdi{unicode-bidi:isolate}
         <div class="hint" id="ibNow"></div>
         <input id="aIban" dir="ltr" autocomplete="off" autocapitalize="characters" maxlength="34" placeholder="SA00 0000 0000 0000 0000 0000" style="text-align:left;letter-spacing:.5px">
         <div class="hint" id="ibBank"></div>
-        <label for="aHolder">الحساب باسم مين؟</label>
-        <select id="aHolder"><option value="me">باسمي أنا</option><option value="other">باسم شخص تاني</option></select>
-        <div id="aOtherBox" class="hidden"><label for="aOther">اسم صاحب الحساب</label><input id="aOther" maxlength="80" style="text-align:start"></div>
+        <div class="hint">لازم يكون الآيبان باسمك إنت.</div>
       </div>
       <label for="aPh">رقم الجوال</label><input id="aPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
       <label class="chk"><input type="checkbox" id="aOk"> أوافق إن مبلغ السلفة يتخصم من راتبي حسب نظام الشركة، وإن بيانات الحساب البنكي صحيحة.</label>
@@ -258,7 +256,7 @@ async function send(p, btn, errId) {
     if (!j.ok) { err(errId, ERRS[j.err] || "الطلب ماتبعتش — جرّب تاني."); return; }
     $("dTitle").textContent = p.type === "سلفة" ? "تم إرسال طلب السلفة" : p.type === "آيبان" ? "تم إرسال الآيبان" : "تم إرسال الشكوى"; $("dSub").textContent = "احتفظ برقم الطلب علشان تتابعه من «طلباتي»";
     $("dNo").classList.remove("hidden"); $("dNo").textContent = j.no;
-    ["aAmt", "aDet", "cDet", "aIban", "aOther"].forEach(id => $(id).value = ""); $("ibBank").textContent = ""; $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
+    ["aAmt", "aDet", "cDet", "aIban"].forEach(id => $(id).value = ""); $("ibBank").textContent = ""; $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
     show("vDone");
   } catch (e) {
     err(errId, "مفيش اتصال دلوقتي — اتأكد من النت وجرّب تاني.");
@@ -273,12 +271,11 @@ $("aSend").onclick = () => {
   if (!$("aReason").value) return err("aErr", "اختار سبب السلفة.");
   const ib = ibClean($("aIban").value);
   if (!ibOk(ib)) return err("aErr", "اكتب الآيبان صح: لازم يبدأ بـ SA وبعده 22 رقم — انسخه من تطبيق البنك.");
-  const other = $("aHolder").value === "other", holder = other ? $("aOther").value.trim() : (ME.n || "");
-  if (other && holder.length < 3) return err("aErr", "اكتب اسم صاحب الحساب البنكي.");
+  const holder = ME.n || "";
   if (!phOk($("aPh").value)) return err("aErr", "اكتب رقم جوال صحيح (05xxxxxxxx).");
   if (!$("aOk").checked) return err("aErr", "لازم توافق على خصم السلفة من الراتب وصحة بيانات الحساب.");
   const det = $("aDet").value.trim();
-  send(Object.assign(payload("سلفة"), { amount: amt, reason: $("aReason").value, iban: ib, bank: ibBank(ib), holder, details: (det ? det + "\n" : "") + "الآيبان: " + ibFmt(ib) + " (" + ibBank(ib) + ") — صاحب الحساب: " + holder + (other ? " (مش باسم المندوب)" : ""), phone: toLatin($("aPh").value).replace(/\D/g, "") }), $("aSend"), "aErr");
+  send(Object.assign(payload("سلفة"), { amount: amt, reason: $("aReason").value, iban: ib, bank: ibBank(ib), holder, details: (det ? det + "\n" : "") + "الآيبان: " + ibFmt(ib) + " (" + ibBank(ib) + ") — باسم المندوب", phone: toLatin($("aPh").value).replace(/\D/g, "") }), $("aSend"), "aErr");
 };
 $("cSend").onclick = () => {
   if (!$("cCat").value) return err("cErr", "اختار نوع الشكوى.");
@@ -299,7 +296,6 @@ function ibOk(v) {
 const ibBank = v => { const x = ibClean(v); return /^SA\d{4}/.test(x) ? (BANKS[x.slice(4, 6)] || "بنك آخر") : ""; };
 const ibFmt = x => x.replace(/(.{4})/g, "$1 ").trim();
 $("aIban").addEventListener("input", () => { err("aErr", ""); const x = ibClean($("aIban").value); $("ibBank").textContent = x.length >= 6 ? (ibBank(x) + (x.length === 24 ? (ibOk(x) ? " ✔ الرقم صحيح" : " ✖ الرقم فيه غلط") : "")) : ""; });
-$("aHolder").onchange = () => $("aOtherBox").classList.toggle("hidden", $("aHolder").value !== "other");
 
 const ST = { "جديد": "s-new", "تحت المراجعة": "s-rev", "تمت الموافقة": "s-ok", "تم الحل": "s-ok", "مرفوض": "s-no" };
 async function loadList() {
