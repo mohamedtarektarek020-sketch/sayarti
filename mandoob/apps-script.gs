@@ -55,8 +55,8 @@ function doPost(e) {
   if (type === 'سلفة' && !(amount > 0 && amount <= 20000)) return json_({ ok: false, err: 'amount' });
   const details = clean_(b.details, 1500);
   if (type === 'شكوى' && details.length < 5) return json_({ ok: false, err: 'details' });
-  const iban = type === 'آيبان' ? String(b.iban || '').toUpperCase().replace(/[^A-Z0-9]/g, '') : '';
-  if (type === 'آيبان' && !ibanOk_(iban)) return json_({ ok: false, err: 'iban' });
+  const iban = String(b.iban || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+  if ((type === 'آيبان' || type === 'سلفة') && !ibanOk_(iban)) return json_({ ok: false, err: 'iban' });
 
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -73,7 +73,7 @@ function doPost(e) {
     const row = [no, new Date(), type, "'" + iq, clean_(b.name, 120), clean_(b.acc, 200), clean_(b.sup, 80), clean_(b.city, 60), "'" + clean_(b.phone, 15),
       amount, clean_(b.reason, 80), details, 'جديد', '', '', tok];
     sh.appendRow(row);
-    if (type === 'آيبان') saveIban_(iq, row[4], iban, clean_(b.reason, 60), clean_(b.holder, 80), row[8].slice(1), no);
+    if (iban) saveIban_(iq, row[4], iban, clean_(type === 'سلفة' ? b.bank : b.reason, 60), clean_(b.holder, 80), row[8].slice(1), no);
     if (NOTIFY) {
       try {
         MailApp.sendEmail(Session.getEffectiveUser().getEmail(), `طلب ${type} جديد — ${row[4]} (${no})`,
