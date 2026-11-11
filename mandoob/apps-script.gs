@@ -12,6 +12,7 @@ const HEAD = ['رقم الطلب', 'التاريخ', 'النوع', 'رقم ال�
   'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق'];
 const STATUSES = ['جديد', 'تحت المراجعة', 'تمت الموافقة', 'مرفوض', 'تم الحل'];
 const ADMIN_PASS = 'غيّر-الكلمة-دي';   // ⚠️ اكتب هنا كلمة سر صفحة الإدارة (8 حروف أو أكتر)
+const VIEW_PASS = '';   // كلمة سر للإدارة: يشوفوا الطلبات بس من غير ما يغيروا حاجة (تقدر تغيرها، 8 حروف أو أكتر)
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
 const MAX_PER_DAY = 3;        // أقصى عدد طلبات للمندوب في اليوم
 
@@ -43,8 +44,10 @@ function doPost(e) {
   let b; try { b = JSON.parse(e.postData.contents); } catch (x) { return json_({ ok: false, err: 'bad' }); }
   if (b.action === 'status') return json_(status_(clean_(b.iq, 10), clean_(b.tok, 40)));
   if (b.action === 'admin_list' || b.action === 'admin_update') {
-    if (!adminOk_(b.pass)) return json_({ ok: false, err: 'pass' });
-    return json_(b.action === 'admin_list' ? adminList_() : adminUpdate_(b));
+    const role = adminOk_(b.pass); if (!role) return json_({ ok: false, err: 'pass' });
+    if (b.action === 'admin_update' && role !== 'admin') return json_({ ok: false, err: 'role' });
+    if (b.action === 'admin_list') { const o = adminList_(); o.role = role; return json_(o); }
+    return json_(adminUpdate_(b));
   }
   if (b.action !== 'submit') return json_({ ok: false, err: 'bad' });
   const iq = clean_(b.iq, 10);
@@ -101,7 +104,8 @@ function adminOk_(pass) {
   const c = CacheService.getScriptCache(), k = 'fails';
   const fails = Number(c.get(k) || 0);
   if (fails >= 10) return false;                       // بعد 10 محاولات غلط يقفل 10 دقايق
-  if (ADMIN_PASS.length >= 8 && ADMIN_PASS !== 'غيّر-الكلمة-دي' && String(pass) === ADMIN_PASS) return true;
+  if (ADMIN_PASS.length >= 8 && ADMIN_PASS !== 'غيّر-الكلمة-دي' && String(pass) === ADMIN_PASS) return 'admin';
+  if (VIEW_PASS.length >= 8 && String(pass) === VIEW_PASS) return 'view';
   c.put(k, String(fails + 1), 600); return false;
 }
 function adminList_() {

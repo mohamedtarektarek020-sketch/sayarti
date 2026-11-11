@@ -138,6 +138,7 @@ const ss = { get: k => { try { return sessionStorage.getItem(k); } catch (e) { r
 let PASS = "", LIST = [];
 function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2800); }
 function err(m) { const e = $("err"); e.textContent = m || ""; e.style.display = m ? "block" : "none"; }
+let ROLE = "admin";
 async function call(body) {
   const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ pass: PASS }, body)) });
   return r.json();
@@ -148,9 +149,9 @@ async function load(silent) {
   try {
     const j = await call({ action: "admin_list" });
     if (!j.ok) { err(j.err === "pass" ? "كلمة السر غلط (ولو غلطت كتير بيقفل 10 دقايق)." : "حصلت مشكلة — جرّب تاني."); ss.del("tq_admin"); return false; }
-    LIST = j.list; ss.set("tq_admin", PASS);
+    LIST = j.list; ROLE = j.role || "admin"; ss.set("tq_admin", PASS);
     $("vLogin").classList.add("hidden"); $("vMain").classList.remove("hidden");
-    $("upd").textContent = "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    $("upd").textContent = (ROLE === "view" ? "👁️ عرض فقط · " : "") + "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
     const sups = [...new Set(LIST.map(r => r.sup).filter(Boolean))].sort();
     const cur = $("fp").value; $("fp").innerHTML = '<option value="">كل المشرفين</option>' + sups.map(s => `<option ${s === cur ? "selected" : ""}>${esc(s)}</option>`).join("");
     render(); return true;
@@ -173,8 +174,8 @@ function render() {
     <div class="what">${r.type === "سلفة" ? "💰 سلفة " + nf(r.amount) + " ريال — " + esc(r.reason) : r.type === "آيبان" ? "🏦 آيبان — " + esc(r.reason) : "📝 شكوى — " + esc(r.reason)}</div>
     ${r.details ? `<div class="det">${esc(r.details)}</div>` : ""}
     <div class="mt">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi>${r.replied ? ` · آخر رد <bdi dir="ltr">${esc(r.replied)}</bdi>` : ""}</div>
-    <div class="act"><select aria-label="الحالة">${STATUSES.map(s => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select>
-      <textarea aria-label="رد الإدارة" placeholder="الرد اللي هيظهر للمندوب">${esc(r.reply)}</textarea><button type="button">حفظ</button></div></div>`).join("")
+    ${ROLE === "view" ? (r.reply ? `<div class="det"><b>رد الإدارة:</b> ${esc(r.reply)}</div>` : "") : `<div class="act"><select aria-label="الحالة">${STATUSES.map(s => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select>
+      <textarea aria-label="رد الإدارة" placeholder="الرد اللي هيظهر للمندوب">${esc(r.reply)}</textarea><button type="button">حفظ</button></div>`}</div>`).join("")
     : '<div class="card hint" style="text-align:center;grid-column:1/-1">مافيش طلبات بالفلتر ده.</div>';
 }
 $("list").addEventListener("click", async e => {
