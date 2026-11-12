@@ -4,6 +4,10 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#2b2470">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="سيارتي">
 <meta name="robots" content="noindex,nofollow">
 <title>بوابة السائق</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -109,6 +113,11 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 .viewer img{max-width:100%;height:auto;border-radius:10px;background:#fff}
 .viewer iframe{width:100%;height:100%;border:0;background:#fff;border-radius:10px}
 @media (max-width:380px){.item{flex-wrap:wrap}.fbtns{width:100%}.fbtns .fbtn{flex:1;text-align:center}}
+.inst{margin-top:12px;border:0;border-radius:999px;padding:10px 18px;background:#fff;color:#2b2470;font:inherit;font-size:15px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.isheet{position:fixed;inset:0;background:rgba(10,8,30,.6);z-index:60;display:flex;align-items:flex-end;justify-content:center}
+.isheet .in{background:var(--card);color:var(--ink);width:100%;max-width:480px;border-radius:22px 22px 0 0;padding:20px 18px 26px;font-size:15.5px;line-height:1.9}
+.isheet h3{margin:0 0 8px;font-size:18px}.isheet ol{margin:0;padding-inline-start:22px}.isheet b{color:var(--accent)}
+.isheet button{margin-top:14px;width:100%;padding:12px;border:0;border-radius:14px;background:var(--accent);color:#fff;font:inherit;font-weight:800;font-size:16px}
 </style>
 </head>
 <body>
@@ -116,6 +125,7 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
   <div class="logo">🚗</div>
   <h1>سيارتي</h1>
   <p id="heroSub">اعرف مواعيد أوراق سيارتك وتغيير الزيت</p>
+  <button class="inst hidden" id="instBtn" type="button">📲 ثبّت التطبيق على موبايلك</button>
 </div>
 
 <div class="wrap">
@@ -418,6 +428,28 @@ $("outBtn").addEventListener("click", () => {
     const s = JSON.parse(store.get("dp_login") || "null");
     if (s){ $("pDigits").value = s.d || ""; login(s.d, s.i, true); }
   }catch(e){}
+})();
+</script>
+<script>
+/* ---------- تثبيت التطبيق على الشاشة الرئيسية ---------- */
+(() => {
+  const btn = document.getElementById("instBtn"); if (!btn) return;
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  if (standalone) return;
+  btn.classList.remove("hidden");
+  let ev = null;
+  addEventListener("beforeinstallprompt", e => { e.preventDefault(); ev = e; });
+  addEventListener("appinstalled", () => btn.classList.add("hidden"));
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  btn.addEventListener("click", async () => {
+    if (ev){ ev.prompt(); try{ const r = await ev.userChoice; if (r && r.outcome === "accepted") btn.classList.add("hidden"); }catch(e){} ev = null; return; }
+    const d = document.createElement("div"); d.className = "isheet";
+    d.innerHTML = `<div class="in"><h3>📲 ثبّت «سيارتي» على موبايلك</h3>${ios
+      ? `<ol><li>دوس زرار المشاركة <b>⬆️</b> تحت في سفاري</li><li>انزل واختار <b>«إضافة إلى الشاشة الرئيسية»</b></li><li>دوس <b>«إضافة»</b> — هتلاقي أيقونة 🚗 سيارتي على الشاشة</li></ol>`
+      : `<ol><li>دوس على <b>⋮</b> فوق على اليمين في كروم</li><li>اختار <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b></li><li>دوس <b>«تثبيت»</b> — هتلاقي أيقونة 🚗 سيارتي على الشاشة</li></ol>`}<button type="button">تمام</button></div>`;
+    d.addEventListener("click", e => { if (e.target === d || e.target.tagName === "BUTTON") d.remove(); });
+    document.body.appendChild(d);
+  });
 })();
 </script>
 </body>
