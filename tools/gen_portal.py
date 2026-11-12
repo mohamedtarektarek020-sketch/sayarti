@@ -137,8 +137,10 @@ for v,man in vehs:
   for iq in holders:
     kk=''.join(re.findall(r'\d',normp(v['plate'])))+'|'+iq
     groups.setdefault(kk,[]).append(car)
-for kk,cars in groups.items():
+FP=hashlib.sha256()
+for kk,cars in sorted(groups.items()):
     payload=json.dumps({'v':2,'cars':cars,'asOf':today.isoformat()},ensure_ascii=False).encode()
+    FP.update(kk.encode()+payload)
     key=derive(kk); iv=os.urandom(12)
     docs[docid(kk)]=base64.b64encode(iv+AESGCM(key).encrypt(iv,payload,None)).decode()
     pairs+=1
@@ -146,7 +148,14 @@ for kk,cars in groups.items():
 if os.path.isdir(os.path.join(OUTDIR,'f')) and not MISSING:
   for fn in os.listdir(os.path.join(OUTDIR,'f')):
     if fn not in used_files: os.remove(os.path.join(OUTDIR,'f',fn))
-json.dump({'v':2,'asOf':today.isoformat(),'n':count,'d':docs},open(out,'w'),separators=(',',':'))
+fp=FP.hexdigest()[:16]
+try: old=json.load(open(out)).get('h')
+except Exception: old=None
+if old==fp and not os.environ.get('PORTAL_FORCE'):
+  print('UNCHANGED — مفيش تغيير في بيانات المناديب')
+else:
+  json.dump({'v':2,'asOf':today.isoformat(),'n':count,'h':fp,'d':docs},open(out,'w'),separators=(',',':'))
+  print('UPDATED', fp)
 if MISSING:
   open(os.environ.get('PORTAL_MISSING','missing.txt'),'w').write('\n'.join(sorted(MISSING)))
   print('MISSING', len(MISSING), 'assets — نزّلهم في فولدر', SRC, 'وشغّل تاني')
