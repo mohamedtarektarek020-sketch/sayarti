@@ -128,6 +128,15 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 .mt li b{color:var(--ink)}
 .mt .stop summary{color:var(--bad)}
 .mt .stop{border-color:var(--bad);background:var(--bad-bg)}
+.pb-open{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:14px;padding:15px;border:0;border-radius:16px;background:#dc2626;color:#fff;font:inherit;font-size:17px;font-weight:800;cursor:pointer;box-shadow:0 6px 18px rgba(220,38,38,.25)}
+.pb-card{margin-top:10px}
+.pb-cats{display:flex;flex-wrap:wrap;gap:8px;margin:6px 0 12px}
+.pb-cats button{border:1.5px solid var(--line);background:var(--card);color:var(--ink);border-radius:999px;padding:8px 12px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.pb-cats button.on{border-color:#dc2626;background:#fdecec;color:#b91c1c}
+.pb-card textarea{width:100%;box-sizing:border-box;border:1.5px solid var(--line);border-radius:12px;padding:10px;font:inherit;font-size:15px;background:var(--bg);color:var(--ink);margin-top:4px}
+.pb-add{display:block;width:100%;margin-top:10px;font:inherit;text-align:center;padding:12px;border:2px dashed var(--line);border-radius:12px;color:var(--muted);font-weight:800;background:transparent;cursor:pointer}
+.pb-hist{margin-top:12px;font-size:13.5px;color:var(--muted);line-height:1.8}
+.pb-hist b{color:var(--ink)}
 </style>
 </head>
 <body>
@@ -164,6 +173,21 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
       <div class="summary" id="cSum"></div>
     </div>
     <div id="cSwitch" class="hidden"></div>
+    <div id="pbBox" class="hidden">
+      <button class="pb-open" id="pbOpen" type="button">🆘 اعرض مشكلتك</button>
+      <div class="card pb-card hidden" id="pbCard">
+        <label style="margin-top:0">نوع المشكلة</label>
+        <div class="pb-cats" id="pbCats"></div>
+        <label for="pbText">اكتب المشكلة بالتفصيل</label>
+        <textarea id="pbText" rows="4" maxlength="600" placeholder="مثلاً: العربية بتسخن بعد ربع ساعة سواقة، ولمبة الحرارة بتنوّر"></textarea>
+        <button class="pb-add" id="pbAddPh" type="button">📷 ضيف صور للمشكلة (اختياري)</button>
+        <input id="pbInput" type="file" accept="image/*" multiple hidden>
+        <div class="ph-grid" id="pbGrid" style="margin-top:8px"></div>
+        <button class="main" id="pbSend" type="button" style="background:#dc2626">إرسال المشكلة للشركة</button>
+        <div class="ph-msg" id="pbMsg" style="margin-top:10px"></div>
+        <div class="pb-hist" id="pbHist"></div>
+      </div>
+    </div>
     <h2>📎 الاستمارة وكارت التشغيل</h2>
     <div id="cFiles"></div>
     <div id="photoBox" class="hidden">
@@ -494,6 +518,62 @@ $("outBtn").addEventListener("click", () => {
     d.addEventListener("click", e => { if (e.target === d || e.target.tagName === "BUTTON") d.remove(); });
     document.body.appendChild(d);
   });
+})();
+</script>
+<script>
+/* ---------- 🆘 اعرض مشكلتك: بتوصل للشركة مع صور السيارة (نفس السيرفر) ---------- */
+(() => {
+  if (!PHOTO_API) return;
+  const CATS = ["🔧 عطل في السيارة","💥 حادث أو خبط","🛞 كفرات","❄️ تكييف","🔋 بطارية / كهربا","📄 أوراق أو مخالفة","📝 حاجة تانية"];
+  let cat = "", PBP = [];
+  const box = $("pbBox"); box.classList.remove("hidden");
+  $("pbOpen").onclick = () => { $("pbCard").classList.toggle("hidden"); if (!$("pbCard").classList.contains("hidden")) { hist(); $("pbCard").scrollIntoView({behavior:"smooth", block:"start"}); } };
+  const drawCats = () => { $("pbCats").innerHTML = CATS.map(c => `<button type="button" class="${c === cat ? "on" : ""}">${c}</button>`).join(""); $("pbCats").querySelectorAll("button").forEach(b => b.onclick = () => { cat = b.textContent; drawCats(); }); };
+  drawCats();
+  const grid = () => { $("pbGrid").innerHTML = PBP.map((p,i) => `<div class="ph-th"><img src="${p.url}" alt=""><button type="button" data-rm="${i}" aria-label="شيل">✕</button></div>`).join(""); $("pbGrid").querySelectorAll("[data-rm]").forEach(b => b.onclick = () => { URL.revokeObjectURL(PBP[+b.dataset.rm].url); PBP.splice(+b.dataset.rm, 1); grid(); }); };
+  $("pbAddPh").onclick = () => $("pbInput").click();
+  $("pbInput").onchange = e => { [...e.target.files].forEach(f => { if (PBP.length < 4 && (!f.type || /^image\//.test(f.type))) PBP.push({ file: f, url: URL.createObjectURL(f) }); }); e.target.value = ""; grid(); };
+  const HK = "pb_hist";
+  const hist = () => { let h = []; try{ h = JSON.parse(store.get(HK) || "[]"); }catch(e){} h = h.filter(x => CUR && x.plate === CUR.plate).slice(-5).reverse();
+    $("pbHist").innerHTML = h.length ? "<b>مشاكلك اللي بعتها:</b><br>" + h.map(x => `• ${x.at} — ${x.cat} — ${String(x.text).slice(0,60)}${x.text.length > 60 ? "…" : ""} ✓ اتبعتت`).join("<br>") : ""; };
+  // صورة فيها نص المشكلة (علشان النص يوصل كامل)
+  function card(pid, when){
+    const W = 900, pad = 50, c = document.createElement("canvas"), g = c.getContext("2d");
+    const font = s => `${s}px Tajawal, "Noto Naskh Arabic", Arial, sans-serif`;
+    g.font = font(34); const words = String($("pbText").value).trim().split(/\s+/); const lines = []; let ln = "";
+    String($("pbText").value).trim().split(/\n/).forEach(par => { ln = ""; par.split(/\s+/).forEach(w => { const t = ln ? ln + " " + w : w; if (g.measureText(t).width > W - pad*2 && ln){ lines.push(ln); ln = w; } else ln = t; }); lines.push(ln); });
+    c.width = W; c.height = 330 + lines.length * 54;
+    g.fillStyle = "#fff"; g.fillRect(0,0,W,c.height); g.fillStyle = "#dc2626"; g.fillRect(0,0,W,120);
+    g.direction = "rtl"; g.textAlign = "right"; g.fillStyle = "#fff"; g.font = font(46); g.fillText("🆘 مشكلة من المندوب", W - pad, 78);
+    g.fillStyle = "#1c1a3a"; g.font = font(32); g.fillText("السيارة: " + CUR.plate + "    ·    " + when, W - pad, 180);
+    g.fillStyle = "#b91c1c"; g.font = font(34); g.fillText("النوع: " + cat, W - pad, 236);
+    g.fillStyle = "#1c1a3a"; g.font = font(34); lines.forEach((l,i) => g.fillText(l, W - pad, 300 + i*54));
+    g.fillStyle = "#999"; g.font = font(22); g.textAlign = "left"; g.direction = "ltr"; g.fillText(pid, pad, c.height - 24);
+    return c.toDataURL("image/jpeg", .85);
+  }
+  async function up(img, note){
+    const r = await fetch(PHOTO_API, { method:"POST", headers:{ "Content-Type":"text/plain;charset=utf-8" }, body: JSON.stringify({ action:"upload", id: LOGIN_ID, plate: CUR.plate, note, img }) });
+    const j = await r.json(); if (!j.ok) throw new Error(j.error || "x");
+  }
+  $("pbSend").onclick = async () => {
+    const text = $("pbText").value.trim(), msg = $("pbMsg"); msg.className = "ph-msg";
+    if (!cat){ msg.className = "ph-msg bad"; msg.textContent = "اختار نوع المشكلة الأول"; return; }
+    if (text.length < 5){ msg.className = "ph-msg bad"; msg.textContent = "اكتب المشكلة بالتفصيل"; return; }
+    const btn = $("pbSend"); btn.disabled = true; msg.textContent = "جاري الإرسال...";
+    const now = new Date(), when = now.toLocaleString("en-GB", { timeZone: "Asia/Riyadh", day:"2-digit", month:"2-digit", year:"numeric", hour:"2-digit", minute:"2-digit" });
+    const pid = "B" + now.getTime().toString(36).toUpperCase();
+    const head = "⚠️مشكلة|" + pid + "|";
+    try{
+      await up(card(pid, when), (head + cat.replace(/\|/g," ") + "|" + text.replace(/\|/g," ")).slice(0, 200));
+      for (const p of PBP){ await up(await phShrink(p.file), head + "صورة"); }
+      let h = []; try{ h = JSON.parse(store.get(HK) || "[]"); }catch(e){}
+      h.push({ at: when, plate: CUR.plate, cat, text }); store.set(HK, JSON.stringify(h.slice(-20)));
+      msg.className = "ph-msg ok"; msg.textContent = "✅ مشكلتك وصلت للشركة — هيتواصلوا معاك. لو الموضوع مستعجل اتصل بالمسؤول.";
+      $("pbText").value = ""; cat = ""; drawCats(); PBP.forEach(p => URL.revokeObjectURL(p.url)); PBP = []; grid(); hist();
+    }catch(e){
+      msg.className = "ph-msg bad"; msg.textContent = "الإرسال ما نجحش — اتأكد من النت ودوس إرسال تاني";
+    }finally{ btn.disabled = false; }
+  };
 })();
 </script>
 </body>
