@@ -118,6 +118,16 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
 .isheet .in{background:var(--card);color:var(--ink);width:100%;max-width:480px;border-radius:22px 22px 0 0;padding:20px 18px 26px;font-size:15.5px;line-height:1.9}
 .isheet h3{margin:0 0 8px;font-size:18px}.isheet ol{margin:0;padding-inline-start:22px}.isheet b{color:var(--accent)}
 .isheet button{margin-top:14px;width:100%;padding:12px;border:0;border-radius:14px;background:var(--accent);color:#fff;font:inherit;font-weight:800;font-size:16px}
+.mt details{background:var(--card);border:1px solid var(--line);border-radius:16px;margin-top:10px;overflow:hidden}
+.mt summary{list-style:none;cursor:pointer;padding:14px 16px;font-weight:800;font-size:16px;display:flex;align-items:center;gap:10px}
+.mt summary::-webkit-details-marker{display:none}
+.mt summary::after{content:"＋";margin-inline-start:auto;color:var(--muted);font-weight:700}
+.mt details[open] summary::after{content:"－"}
+.mt ul{margin:0;padding:0 16px 14px 16px;list-style:none}
+.mt li{padding:9px 0;border-top:1px dashed var(--line);font-size:15px;line-height:1.75}
+.mt li b{color:var(--ink)}
+.mt .stop summary{color:var(--bad)}
+.mt .stop{border-color:var(--bad);background:var(--bad-bg)}
 </style>
 </head>
 <body>
@@ -172,6 +182,40 @@ h2{font-size:16px;margin:22px 4px 10px;color:var(--muted);font-weight:800}
     <div id="cDates"></div>
     <h2>🛢️ تغيير الزيت</h2>
     <div id="cOil"></div>
+    <h2>🛠️ إرشادات الصيانة الدورية</h2>
+    <div class="mt">
+      <details open><summary>☀️ كل يوم قبل ما تتحرك</summary><ul>
+        <li>شغّل العربية وبص على <b>الطبلون</b>: لو فيه لمبة حمرا أو صفرا منوّرة ومش بتطفي — كلّم الشركة.</li>
+        <li>لف حوالين العربية: <b>الكفرات</b> شكلها سليم، مفيهاش نفخ ناقص أو مسمار أو قطع.</li>
+        <li>بص تحت العربية: <b>مفيش تسريب</b> زيت أو مية.</li>
+        <li>اتأكد إن <b>الأنوار والإشارات</b> والفرامل شغالين.</li>
+      </ul></details>
+      <details><summary>📅 كل أسبوع</summary><ul>
+        <li><b>زيت الماكينة:</b> اكشف بالعصاية والعربية واقفة على أرض مستوية والماكينة باردة — لازم يكون بين العلامتين.</li>
+        <li><b>مية الرديتر:</b> اكشف عليها والماكينة باردة بس — <b>متفتحش غطا الرديتر والماكينة سخنة</b>.</li>
+        <li><b>مية المساحات:</b> املاها لو ناقصة.</li>
+        <li><b>هوا الكفرات:</b> اظبطه في البنزينة على الرقم المكتوب على الملصق في باب السواق — ومتنساش الاستبن.</li>
+        <li><b>النضافة:</b> نضّف العربية من جوه وبره، والزجاج والمرايات.</li>
+      </ul></details>
+      <details><summary>🛢️ حسب العداد</summary><ul>
+        <li><b>زيت الماكينة والفلتر:</b> كل 10,000 كم — في بترومين. الرقم المطلوب مكتوب فوق في قسم «تغيير الزيت».</li>
+        <li><b>زيت القير:</b> كل 50,000 كم — في بترومين.</li>
+        <li>لما تغيّر الزيت <b>صوّر العداد</b> واحتفظ بالفاتورة.</li>
+        <li>لو العداد قرب من الرقم المكتوب ومش عارف تروح — كلّم الشركة قبلها.</li>
+      </ul></details>
+      <details class="stop"><summary>⛔ وقّف العربية على طول لو…</summary><ul>
+        <li>لمبة <b>الزيت الحمرا</b> أو لمبة <b>الحرارة</b> نوّرت، أو مؤشر الحرارة طلع للأحمر.</li>
+        <li>طلع <b>دخان</b> أو ريحة حريق، أو فيه صوت غريب في <b>الفرامل</b> أو الماكينة.</li>
+        <li>الفرامل بقت ضعيفة أو الدركسيون تقيل أو العربية بتشد لجنب.</li>
+        <li>اركن في مكان آمن، اطفي العربية، شغّل الفلاشر — و<b>كلّم الشركة</b>. متكمّلش سواقة.</li>
+      </ul></details>
+      <details><summary>📌 مهم تعرفه</summary><ul>
+        <li><b>متعملش أي إصلاح أو تغيير قطع</b> من غير موافقة الشركة.</li>
+        <li>احتفظ بأي <b>فاتورة أو إيصال</b> لأي خدمة اتعملت للعربية.</li>
+        <li>لو حصل <b>حادث أو خبط</b>: بلّغ الجهة المختصة، صوّر العربية من كل الاتجاهات، وكلّم الشركة على طول.</li>
+        <li>متسيبش العربية في الشمس فترة طويلة من غير غطا للطبلون، ومتسيبش جواها حاجات قابلة للاشتعال.</li>
+      </ul></details>
+    </div>
     <div class="foot" id="cFoot"></div>
   </div>
 </div>
