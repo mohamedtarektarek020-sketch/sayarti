@@ -138,7 +138,7 @@ for v,man in vehs:
   own=str(m.get('ownership') or '')
   if 'المندوب' in own: contract='ملك المندوب'
   elif src and ((src[0]=='d' and src[1].get('contractType')=='ownership') or (src[0]=='r' and 'تمليك' in str(src[1].get('rentalType') or ''))): contract='إيجار مع وعد بالتملك'
-  elif src and src[0]=='r' and 'داخلي' in str(src[1].get('rentalType') or ''): contract='سيارة شركة — استخدام داخلي'
+  elif src and src[0]=='r' and 'داخلي' in str(src[1].get('rentalType') or ''): contract='إيجار داخلي'
   else: contract='إيجار'
   CONTRACTS.append((v['plate'],m.get('serial',v.get('serial','')),contract,str(best[2] if best else '')))
   car={'contract':contract,'plate':v['plate'],'model':m.get('model',''),'year':m.get('year',''),'color':m.get('color',''),'dates':dates,'oil':oil,'files':files,'asOf':today.isoformat()}
