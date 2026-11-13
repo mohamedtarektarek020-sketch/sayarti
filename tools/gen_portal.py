@@ -88,6 +88,7 @@ rent+=[r for r in st['manualRentals'] if r.get('id') not in st['hiddenRentalIds'
 pet={}
 for p in st.get('petromin',[]): pet.setdefault(normp(p['plate']),[]).append(p)
 iqok=lambda s: bool(re.fullmatch(r'[12]\d{9}',str(s or '').strip()))
+CONTRACTS=[]
 docs={}; count=0; pairs=0; groups={}
 vehs=[(v,False) for v in st['vehicles']]+[(v,True) for v in st.get('manualVehicles',[])]
 seen=set()
@@ -97,11 +98,12 @@ for v,man in vehs:
   seen.add(k); m=eff(v,man)
   # صاحب السيارة الحالي بس (نفس منطق الداش بورد): آخر سائق مستلم أو آخر إيجار، ولو مفيش يبقى المستخدم
   holders=set(); best=None
+  src=None
   for d0 in m['_drivers']:
-    if not best or (d0.get('receiveDate') or '')>=(best[0] or ''): best=(d0.get('receiveDate') or '', d0.get('iqama'), d0.get('name'))
+    if not best or (d0.get('receiveDate') or '')>=(best[0] or ''): best=(d0.get('receiveDate') or '', d0.get('iqama'), d0.get('name')); src=('d',d0)
   rr=sorted([r for r in rent if normp(r.get('plate'))==k],key=lambda r:r.get('receiveDate') or '',reverse=True)
   if rr and rr[0].get('user') and (not best or (rr[0].get('receiveDate') or '')>(best[0] or '')):
-    best=(rr[0].get('receiveDate') or '', rr[0].get('iqama'), rr[0].get('user'))
+    best=(rr[0].get('receiveDate') or '', rr[0].get('iqama'), rr[0].get('user')); src=('r',rr[0])
   if best and best[0]>today.isoformat(): best=best  # استلام مستقبلي نادر — نسيبه
   if best:
     if iqok(best[1]): holders.add(str(best[1]).strip())
@@ -132,7 +134,14 @@ for v,man in vehs:
   cd=m['_d'].get('card'); locked=bool(cd and re.match(r'\d{4}-\d\d-\d\d$',str(cd)) and (datetime.date.fromisoformat(cd)-today).days<=1)
   fc=None if locked else enc_file(m.get('operationCardImage'))
   if fc: fc.update({'k':'card','t':'كارت التشغيل'}); files.append(fc)
-  car={'plate':v['plate'],'model':m.get('model',''),'year':m.get('year',''),'color':m.get('color',''),'dates':dates,'oil':oil,'files':files,'asOf':today.isoformat()}
+  # نوع التعاقد (بيظهر تحت السيارة في التطبيق)
+  own=str(m.get('ownership') or '')
+  if 'المندوب' in own: contract='ملك المندوب'
+  elif src and ((src[0]=='d' and src[1].get('contractType')=='ownership') or (src[0]=='r' and 'تمليك' in str(src[1].get('rentalType') or ''))): contract='إيجار منتهي بالتمليك'
+  elif src and src[0]=='r' and 'داخلي' in str(src[1].get('rentalType') or ''): contract='سيارة شركة — استخدام داخلي'
+  else: contract='إيجار'
+  CONTRACTS.append((v['plate'],m.get('serial',v.get('serial','')),contract,str(best[2] if best else '')))
+  car={'contract':contract,'plate':v['plate'],'model':m.get('model',''),'year':m.get('year',''),'color':m.get('color',''),'dates':dates,'oil':oil,'files':files,'asOf':today.isoformat()}
   count+=1; nfiles=globals().setdefault('nfiles',[0,0]); nfiles[0]+=1 if fr else 0; nfiles[1]+=1 if fc else 0
   for iq in holders:
     kk=''.join(re.findall(r'\d',normp(v['plate'])))+'|'+iq
@@ -165,4 +174,6 @@ else:
 INDEX={k:v for k,v in INDEX.items()}
 json.dump(INDEX,open(IDX_PATH,'w'),separators=(',',':'))
 print('index',len(INDEX),'new',NEWIDX)
+import collections; print('contracts',dict(collections.Counter(x[2] for x in CONTRACTS)))
+if os.environ.get('PORTAL_CONTRACTS'): json.dump(CONTRACTS,open(os.environ['PORTAL_CONTRACTS'],'w'),ensure_ascii=False)
 print('cars',count,'logins',pairs,'reg/card files',globals().get('nfiles'),'multi',sum(1 for c in groups.values() if len(c)>1))
