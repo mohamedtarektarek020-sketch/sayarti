@@ -54,6 +54,9 @@ button{font:inherit;cursor:pointer}
 .choices{display:grid;gap:12px;margin-top:16px}
 .choice{display:flex;align-items:center;gap:14px;width:100%;text-align:start;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:16px;color:var(--ink)}
 .choice:hover{border-color:var(--accent)}
+.choice.closed{opacity:.6;background:var(--line)}.choice.closed .t2{color:var(--bad);font-weight:700}
+.req .rep.auto{border:1px dashed var(--muted);color:var(--muted)}
+.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:12px 18px;border-radius:14px;z-index:50;max-width:calc(100% - 32px);font-weight:700;text-align:center;line-height:1.6}
 .choice .ic{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:26px;flex-shrink:0}
 .choice .t1{font-weight:800;font-size:17px}
 .choice .t2{color:var(--muted);font-size:13.5px;margin-top:3px}
@@ -185,6 +188,7 @@ async function loadData() { if (DATA) return DATA; const r = await fetch("data.j
 
 function show(v) {
   ["vLogin", "vHome", "vAdv", "vCmp", "vDone", "vList"].forEach(x => $(x).classList.toggle("hidden", x !== v));
+  if (v === "vHome") advState();
   window.scrollTo(0, 0);
 }
 function err(id, m) { const e = $(id); e.textContent = m || ""; e.style.display = m ? "block" : "none"; }
@@ -243,7 +247,17 @@ function payload(type) {
   const a = ME.acc && ME.acc[0];
   return { action: "submit", type, iq: IQ, tok: TOK, name: ME.n || "", acc: accTxt(), sup: a ? a.s || "" : "", city: ME.c || "" };
 }
-const ERRS = { tok: "البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", iban: "رقم الآيبان مش صحيح — راجعه من تطبيق البنك.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
+// السلف متاحة يوميًا من 1 لـ 2 الضهر بتوقيت السعودية (والسيرفر بيرفض أي طلب برّه الوقت ده)
+const ADV_FROM = 13, ADV_TO = 14;
+const riyadhHour = () => { try { return Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Riyadh", hour: "numeric", hourCycle: "h23" }).format(new Date())); } catch (e) { return (new Date().getUTCHours() + 3) % 24; } };
+const advOpen = () => { const h = riyadhHour(); return h >= ADV_FROM && h < ADV_TO; };
+const ADV_HOURS = "طلب السلفة متاح يوميًا من الساعة 1 لحد الساعة 2 الضهر بس.";
+function toast(t) { const el = document.createElement("div"); el.className = "toast"; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 3500); }
+function advState() { const b = document.querySelector('[data-go="adv"]'); if (!b) return; const o = advOpen(); b.classList.toggle("closed", !o); b.querySelector(".t2").textContent = o ? "متاح دلوقتي لحد الساعة 2 الضهر — اطلب مبلغ مقدم وبيتخصم من راتبك" : "🕐 " + ADV_HOURS; }
+setInterval(advState, 30000);
+// رد تلقائي بيظهر للمندوب لحد ما الإدارة ترد بنفسها
+const AUTO = { "سلفة": "تم استلام طلب السلفة ✅ وهو دلوقتي تحت المراجعة. هيتم الرد عليك خلال 24 ساعة، وتقدر تتابع الحالة من هنا.", "شكوى": "تم استلام شكوتك ✅ والإدارة هتراجعها وترد عليك في أقرب وقت. شكرًا إنك بلّغتنا.", "آيبان": "تم استلام الآيبان ✅ وهيتم مراجعته." };
+const ERRS = { closed: ADV_HOURS + " جرّب تاني في الميعاد.", tok: "البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", iban: "رقم الآيبان مش صحيح — راجعه من تطبيق البنك.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
 
 async function send(p, btn, errId) {
   err(errId, "");
@@ -253,7 +267,7 @@ async function send(p, btn, errId) {
     const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(p) });
     const j = await r.json();
     if (!j.ok) { err(errId, ERRS[j.err] || "الطلب ماتبعتش — جرّب تاني."); return; }
-    $("dTitle").textContent = p.type === "سلفة" ? "تم إرسال طلب السلفة" : p.type === "آيبان" ? "تم إرسال الآيبان" : "تم إرسال الشكوى"; $("dSub").textContent = "احتفظ برقم الطلب علشان تتابعه من «طلباتي»";
+    $("dTitle").textContent = p.type === "سلفة" ? "تم إرسال طلب السلفة" : p.type === "آيبان" ? "تم إرسال الآيبان" : "تم إرسال الشكوى"; $("dSub").textContent = AUTO[p.type] || "احتفظ برقم الطلب علشان تتابعه من «طلباتي»";
     $("dNo").classList.remove("hidden"); $("dNo").textContent = j.no;
     ["aAmt", "aDet", "cDet", "aIban"].forEach(id => $(id).value = ""); $("ibBank").textContent = ""; $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
     show("vDone");
@@ -305,7 +319,7 @@ async function loadList() {
     const j = await (await fetch(API + "?action=status&iq=" + IQ + "&tok=" + TOK)).json();
     if (!j.ok) throw 0;
     box.innerHTML = j.list.length ? j.list.map(r => `<div class="req"><div class="top"><div class="t1">${r.type === "سلفة" ? "💰 سلفة" + (r.amount ? " — " + Number(r.amount).toLocaleString("en-US") + " ريال" : "") : r.type === "آيبان" ? "🏦 آيبان — " + esc(r.reason) : "📝 شكوى — " + esc(r.reason)}</div><span class="pill ${ST[r.status] || "s-new"}">${esc(r.status)}</span></div>
-      <div class="t2">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>رد الإدارة:</b> ${esc(r.reply)}</div>` : ""}</div>`).join("")
+      <div class="t2">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>رد الإدارة:</b> ${esc(r.reply)}</div>` : (r.status === "جديد" || r.status === "تحت المراجعة") && AUTO[r.type] ? `<div class="rep auto"><b>🤖 رد تلقائي:</b> ${AUTO[r.type]}</div>` : ""}</div>`).join("")
       : '<div class="card hint" style="text-align:center">لسه مقدمتش أي طلبات.</div>';
   } catch (e) { box.innerHTML = '<div class="card hint" style="text-align:center">مقدرناش نجيب الطلبات دلوقتي — جرّب تاني بعد شوية.</div>'; }
 }
@@ -313,7 +327,7 @@ async function loadList() {
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-go]"); if (!b) return;
   const g = b.dataset.go;
-  if (g === "home") show("vHome"); else if (g === "adv") { err("aErr", ""); $("ibNow").textContent = ME.ib ? "الآيبان المسجل عندنا بينتهي بـ " + ME.ib + " — اكتبه كامل للتأكيد، أو اكتب الجديد لو اتغيّر." : "اكتب رقم الآيبان بتاعك علشان السلفة تتحول عليه."; show("vAdv"); } else if (g === "cmp") { err("cErr", ""); show("vCmp"); } else if (g === "list") { show("vList"); loadList(); }
+  if (g === "home") show("vHome"); else if (g === "adv") { if (!advOpen()) { advState(); toast(ADV_HOURS); return; } err("aErr", ""); $("ibNow").textContent = ME.ib ? "الآيبان المسجل عندنا بينتهي بـ " + ME.ib + " — اكتبه كامل للتأكيد، أو اكتب الجديد لو اتغيّر." : "اكتب رقم الآيبان بتاعك علشان السلفة تتحول عليه."; show("vAdv"); } else if (g === "cmp") { err("cErr", ""); show("vCmp"); } else if (g === "list") { show("vList"); loadList(); }
 });
 $("goBtn").onclick = () => login($("iqama").value);
 $("iqama").addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); });

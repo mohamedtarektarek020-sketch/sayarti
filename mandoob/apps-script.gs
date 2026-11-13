@@ -14,7 +14,9 @@ const STATUSES = ['جديد', 'تحت المراجعة', 'تمت الموافق�
 const ADMIN_PASS = 'غيّر-الكلمة-دي';   // ⚠️ اكتب هنا كلمة سر صفحة الإدارة (8 حروف أو أكتر)
 const VIEW_PASS = '';   // كلمة سر للإدارة: يشوفوا الطلبات بس من غير ما يغيروا حاجة (تقدر تغيرها، 8 حروف أو أكتر)
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
-const MAX_PER_DAY = 3;        // أقصى عدد طلبات للمندوب في اليوم
+const MAX_PER_DAY = 3;
+const ADV_FROM = 13, ADV_TO = 14;   // طلبات السلف متاحة يوميًا من 1 لـ 2 الضهر بتوقيت السعودية
+const advOpen_ = () => { const h = Number(Utilities.formatDate(new Date(), 'Asia/Riyadh', 'H')); return h >= ADV_FROM && h < ADV_TO; };        // أقصى عدد طلبات للمندوب في اليوم
 
 function setup() {
   const ss = ss_();
@@ -54,6 +56,7 @@ function doPost(e) {
   if (!/^[12]\d{9}$/.test(iq)) return json_({ ok: false, err: 'iq' });
   const type = ['سلفة', 'شكوى', 'آيبان'].indexOf(b.type) >= 0 ? b.type : '';
   if (!type) return json_({ ok: false, err: 'type' });
+  if (type === 'سلفة' && !advOpen_()) return json_({ ok: false, err: 'closed' });
   const amount = type === 'سلفة' ? Math.round(Number(b.amount) || 0) : '';
   if (type === 'سلفة' && !(amount > 0 && amount <= 20000)) return json_({ ok: false, err: 'amount' });
   const details = clean_(b.details, 1500);
