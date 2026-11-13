@@ -115,7 +115,7 @@ bdi{unicode-bidi:isolate}
   </section>
   <section id="vMain" class="hidden">
     <div class="card lift"><div class="who"><div><div class="nm">الطلبات</div><div class="meta" id="upd"></div></div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" id="refBtn" type="button">↻ تحديث</button><button class="ghost" id="xlBtn" type="button">⬇ إكسل</button><button class="ghost" id="outBtn" type="button">خروج</button></div></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="ghost" id="refBtn" type="button">↻ تحديث</button><button class="ghost" id="xlBtn" type="button">⬇ إكسل</button><button class="ghost" id="advXl" type="button">💰 كل السلف إكسل</button><button class="ghost" id="outBtn" type="button">خروج</button></div></div>
       <div class="kp" id="kp"></div></div>
     <div class="flt">
       <input id="fq" type="search" placeholder="بحث بالاسم أو الإقامة أو رقم الطلب">
@@ -151,6 +151,7 @@ async function load(silent) {
     if (!j.ok) { err(j.err === "pass" ? "كلمة السر غلط (ولو غلطت كتير بيقفل 10 دقايق)." : "حصلت مشكلة — جرّب تاني."); ss.del("tq_admin"); return false; }
     LIST = j.list; ROLE = j.role || "admin"; ss.set("tq_admin", PASS);
     if (ROLE === "legal") { $("ft").value = "شكوى"; $("ft").disabled = true; }
+    $("advXl").classList.toggle("hidden", ROLE === "legal");
     $("vLogin").classList.add("hidden"); $("vMain").classList.remove("hidden");
     $("upd").textContent = (ROLE === "view" ? "👁️ عرض فقط · " : ROLE === "legal" ? "⚖️ الشؤون القانونية — الشكاوى بس · " : "") + "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
     const sups = [...new Set(LIST.map(r => r.sup).filter(Boolean))].sort();
@@ -192,6 +193,25 @@ $("goBtn").onclick = () => { PASS = $("pass").value; err(""); load(); };
 $("pass").addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); });
 $("refBtn").onclick = () => load();
 $("outBtn").onclick = () => { ss.del("tq_admin"); PASS = ""; LIST = []; ROLE = "admin"; $("ft").disabled = false; $("ft").value = ""; $("pass").value = ""; $("vMain").classList.add("hidden"); $("vLogin").classList.remove("hidden"); };
+/* كل طلبات السلف في ملف واحد للمراجعة (مين مستحق ومين لا) */
+$("advXl").onclick = () => {
+  const adv = LIST.filter(r => r.type === "سلفة");
+  if (!adv.length) { alert("مافيش طلبات سلف لسه."); return; }
+  const ibOf = d => { const m = String(d || "").match(/الآيبان:\s*([A-Z0-9 ]+?)\s*\(([^)]*)\)/); return m ? [m[1].replace(/\s+/g, ""), m[2]] : ["", ""]; };
+  const H = ["رقم الطلب", "التاريخ", "الاسم", "الإقامة", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ (ريال)", "السبب", "الآيبان", "البنك", "التفاصيل", "الحالة", "الرد", "رد بواسطة", "تاريخ الرد", "مستحق؟ (نعم / لا)", "ملاحظات المراجعة"];
+  const rows = adv.map(r => { const [ib, bank] = ibOf(r.details); const det = String(r.details || "").replace(/\n?الآيبان:[^\n]*/, "").trim();
+    return [r.no, r.date, r.name, r.iq, r.acc, r.sup, r.city, r.phone, Number(r.amount) || 0, r.reason, ib, bank, det, r.status, r.reply, r.by || "", r.replied, "", ""]; });
+  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
+  const ws = XLSX.utils.aoa_to_sheet([H].concat(rows)); ws["!views"] = [{ RTL: true }];
+  ws["!cols"] = [14, 16, 30, 13, 26, 14, 12, 13, 12, 16, 28, 18, 34, 14, 30, 16, 16, 16, 30].map(w => ({ wch: w }));
+  ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: H.length - 1 } }) };
+  XLSX.utils.book_append_sheet(wb, ws, "كل السلف");
+  const st = {}; adv.forEach(r => { const k = r.status || "جديد"; st[k] = st[k] || [0, 0]; st[k][0]++; st[k][1] += Number(r.amount) || 0; });
+  const sum = [["الحالة", "عدد الطلبات", "إجمالي المبالغ (ريال)"]].concat(Object.entries(st).map(([k, v]) => [k, v[0], v[1]]), [["الإجمالي", adv.length, adv.reduce((a, r) => a + (Number(r.amount) || 0), 0)]]);
+  const ws2 = XLSX.utils.aoa_to_sheet(sum); ws2["!views"] = [{ RTL: true }]; ws2["!cols"] = [{ wch: 18 }, { wch: 14 }, { wch: 22 }];
+  XLSX.utils.book_append_sheet(wb, ws2, "ملخص");
+  XLSX.writeFile(wb, "كل السلف " + new Date().toISOString().slice(0, 10) + ".xlsx");
+};
 $("xlBtn").onclick = () => {
   const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "التفاصيل", "الحالة", "رد الإدارة"];
   const aoa = [H].concat(filtered().map(r => [r.no, r.date, r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, r.amount || "", r.reason, r.details, r.status, r.reply]));
