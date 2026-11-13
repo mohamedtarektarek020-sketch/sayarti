@@ -248,17 +248,17 @@ function payload(type) {
   const a = ME.acc && ME.acc[0];
   return { action: "submit", type, iq: IQ, tok: TOK, name: ME.n || "", acc: accTxt(), sup: a ? a.s || "" : "", city: ME.c || "" };
 }
-// السلف متاحة يوميًا من 1 لـ 2 الضهر بتوقيت السعودية (والسيرفر بيرفض أي طلب برّه الوقت ده)
-const ADV_FROM = 13, ADV_TO = 14;
+// السلف متاحة يوميًا من 10 الصبح لـ 1 الضهر بتوقيت السعودية (والسيرفر بيرفض أي طلب برّه الوقت ده)
+const ADV_FROM = 10, ADV_TO = 13;
 const riyadhHour = () => { try { return Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Riyadh", hour: "numeric", hourCycle: "h23" }).format(new Date())); } catch (e) { return (new Date().getUTCHours() + 3) % 24; } };
 const advOpen = () => { const h = riyadhHour(); return h >= ADV_FROM && h < ADV_TO; };
-const ADV_HOURS = "طلب السلفة متاح يوميًا من الساعة 1 لحد الساعة 2 الضهر بس.";
+const ADV_HOURS = "طلب السلفة متاح يوميًا من الساعة 10 الصبح لحد الساعة 1 الضهر بس.";
 function toast(t) { const el = document.createElement("div"); el.className = "toast"; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 3500); }
-function advState() { const b = document.querySelector('[data-go="adv"]'); if (!b) return; const o = advOpen(); b.classList.toggle("closed", !o); b.querySelector(".t2").textContent = o ? "متاح دلوقتي لحد الساعة 2 الضهر — اطلب مبلغ مقدم وبيتخصم من راتبك" : "🕐 " + ADV_HOURS; }
+function advState() { const b = document.querySelector('[data-go="adv"]'); if (!b) return; const o = advOpen(); b.classList.toggle("closed", !o); b.querySelector(".t2").textContent = o ? "متاح دلوقتي لحد الساعة 1 الضهر — اطلب مبلغ مقدم وبيتخصم من راتبك" : "🕐 " + ADV_HOURS; }
 setInterval(advState, 30000);
 // رد تلقائي بيظهر للمندوب لحد ما الإدارة ترد بنفسها
 const AUTO = { "سلفة": "طلبك تحت المراجعة وسيتم الرد عليك في أقرب وقت ✅", "شكوى": "تم استلام شكواك ✅ وسيتم مراجعتها والرد عليك في أقرب وقت. شكرًا لتواصلك معنا.", "آيبان": "تم استلام الآيبان ✅ وهيتم مراجعته." };
-const ERRS = { closed: ADV_HOURS + " جرّب تاني في الميعاد.", advday: "قدّمت طلب سلفة النهارده — مسموح بطلب سلفة واحد بس في اليوم. تقدر تقدّم طلب جديد بكره من الساعة 1 لـ 2 الضهر.", cmpday: "قدّمت شكوتين النهارده — الحد الأقصى شكوتين في اليوم. تقدر تقدّم شكوى جديدة بكره.", tok: "البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", iban: "رقم الآيبان مش صحيح — راجعه من تطبيق البنك.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
+const ERRS = { closed: ADV_HOURS + " جرّب تاني في الميعاد.", advday: "قدّمت طلب سلفة النهارده — مسموح بطلب سلفة واحد بس في اليوم. تقدر تقدّم طلب جديد بكره من الساعة 10 الصبح لـ 1 الضهر.", cmpday: "قدّمت شكوتين النهارده — الحد الأقصى شكوتين في اليوم. تقدر تقدّم شكوى جديدة بكره.", tok: "البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", iban: "رقم الآيبان مش صحيح — راجعه من تطبيق البنك.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
 
 async function send(p, btn, errId) {
   err(errId, "");

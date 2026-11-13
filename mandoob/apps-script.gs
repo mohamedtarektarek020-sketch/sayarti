@@ -16,7 +16,7 @@ const VIEW_PASS = '';   // كلمة سر للإدارة: يشوفوا الطلب
 const LEGAL_PASS = '';   // كلمة سر الشؤون القانونية: بيشوفوا الشكاوى بس ويردّوا عليها (8 حروف أو أكتر)
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
 const MAX_PER_DAY = 3;
-const ADV_FROM = 13, ADV_TO = 14;   // طلبات السلف متاحة يوميًا من 1 لـ 2 الضهر بتوقيت السعودية
+const ADV_FROM = 10, ADV_TO = 13;   // طلبات السلف متاحة يوميًا من 10 الصبح لـ 1 الضهر بتوقيت السعودية
 const advOpen_ = () => { const h = Number(Utilities.formatDate(new Date(), 'Asia/Riyadh', 'H')); return h >= ADV_FROM && h < ADV_TO; };        // أقصى عدد طلبات للمندوب في اليوم
 
 function setup() {
