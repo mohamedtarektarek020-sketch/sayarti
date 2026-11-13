@@ -425,7 +425,7 @@ function render(c){
   $("heroSub").textContent = "بيانات سيارتك محدّثة من الشركة";
   $("cPlate").textContent = c.plate;
   $("cMeta").textContent = [c.model, c.year, c.color].filter(Boolean).join(" · ");
-  const ctr = $("cContract"); if (ctr){ ctr.textContent = c.contract ? ({"ملك المندوب":"🏠 ","إيجار منتهي بالتمليك":"🔑 ","إيجار":"📝 "}[c.contract] || "🏢 ") + c.contract : ""; ctr.style.display = c.contract ? "" : "none"; }
+  const ctr = $("cContract"); if (ctr){ ctr.textContent = c.contract ? ({"ملك المندوب":"🏠 ","إيجار مع وعد بالتملك":"🔑 ","إيجار":"📝 "}[c.contract] || "🏢 ") + c.contract : ""; ctr.style.display = c.contract ? "" : "none"; }
   const dates = c.dates.slice().sort((a,b) => (a.left==null?1e9:a.left) - (b.left==null?1e9:b.left));
   $("cDates").innerHTML = dates.map(x => `
     <div class="item ${cls(x.left)}">

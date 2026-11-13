@@ -137,7 +137,7 @@ for v,man in vehs:
   # نوع التعاقد (بيظهر تحت السيارة في التطبيق)
   own=str(m.get('ownership') or '')
   if 'المندوب' in own: contract='ملك المندوب'
-  elif src and ((src[0]=='d' and src[1].get('contractType')=='ownership') or (src[0]=='r' and 'تمليك' in str(src[1].get('rentalType') or ''))): contract='إيجار منتهي بالتمليك'
+  elif src and ((src[0]=='d' and src[1].get('contractType')=='ownership') or (src[0]=='r' and 'تمليك' in str(src[1].get('rentalType') or ''))): contract='إيجار مع وعد بالتملك'
   elif src and src[0]=='r' and 'داخلي' in str(src[1].get('rentalType') or ''): contract='سيارة شركة — استخدام داخلي'
   else: contract='إيجار'
   CONTRACTS.append((v['plate'],m.get('serial',v.get('serial','')),contract,str(best[2] if best else '')))
