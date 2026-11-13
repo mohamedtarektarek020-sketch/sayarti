@@ -9,7 +9,14 @@ const SS_ID = '';   // رقم الشيت (من رابطه بين /d/ و /edit) �
 const SHEET = 'الطلبات';
 const ss_ = () => SS_ID ? SpreadsheetApp.openById(SS_ID) : SpreadsheetApp.getActive();
 const HEAD = ['رقم الطلب', 'التاريخ', 'النوع', 'رقم الإقامة', 'الاسم', 'المنصة / الحساب', 'المشرف', 'المدينة', 'الجوال',
-  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق', 'رد بواسطة'];
+  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق', 'رد بواسطة', 'الترجمة للعربي'];
+// ترجمة تلقائية للعربي لأي نص مكتوب بلغة تانية (إنجليزي / بنغالي / أوردو ...)
+function tr_(s) {
+  s = String(s || '').replace(/\n?الآيبان:[^\n]*/, '').trim(); if (!s) return '';
+  const ar = (s.match(/[\u0621-\u064A]/g) || []).length, other = (s.match(/[A-Za-z\u0900-\u09FF]/g) || []).length;
+  if (other <= ar || other < 3) return '';
+  try { return LanguageApp.translate(s, '', 'ar'); } catch (x) { return ''; }
+}
 const STATUSES = ['جديد', 'تحت المراجعة', 'تمت الموافقة', 'مرفوض', 'تم الحل'];
 const ADMIN_PASS = 'غيّر-الكلمة-دي';   // ⚠️ اكتب هنا كلمة سر صفحة الإدارة (8 حروف أو أكتر)
 const VIEW_PASS = '';   // كلمة سر للإدارة: يشوفوا الطلبات بس من غير ما يغيروا حاجة (تقدر تغيرها، 8 حروف أو أكتر)
@@ -82,14 +89,14 @@ function doPost(e) {
     if (type === 'سلفة' && mine.some(r => r[2] === 'سلفة' && (r[12] === 'جديد' || r[12] === 'تحت المراجعة'))) return json_({ ok: false, err: 'open' });
     const no = (type === 'سلفة' ? 'S' : type === 'آيبان' ? 'B' : 'C') + Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyMMdd') + '-' + String(rows.length + 1).padStart(4, '0');
     const row = [no, new Date(), type, "'" + iq, clean_(b.name, 120), clean_(b.acc, 200), clean_(b.sup, 80), clean_(b.city, 60), "'" + clean_(b.phone, 15),
-      amount, clean_(b.reason, 80), details, 'جديد', '', '', tok];
+      amount, clean_(b.reason, 80), details, 'جديد', '', '', tok, '', tr_(details)];
     sh.appendRow(row);
     if (iban) saveIban_(iq, row[4], iban, clean_(type === 'سلفة' ? b.bank : b.reason, 60), clean_(b.holder, 80), row[8].slice(1), no);
     if (NOTIFY) {
       try {
         MailApp.sendEmail(Session.getEffectiveUser().getEmail(), `طلب ${type} جديد — ${row[4]} (${no})`,
           `النوع: ${type}\nالاسم: ${row[4]}\nالإقامة: ${iq}\nالحساب: ${row[5]}\nالمشرف: ${row[6]}\nالجوال: ${row[8].slice(1)}\n` +
-          (type === 'سلفة' ? `المبلغ: ${amount} ريال\n` : '') + `السبب / النوع: ${row[10]}\nالتفاصيل: ${details}\n\nافتح الشيت: ${ss_().getUrl()}`);
+          (type === 'سلفة' ? `المبلغ: ${amount} ريال\n` : '') + `السبب / النوع: ${row[10]}\nالتفاصيل: ${details}\n` + (row[17] ? `الترجمة: ${row[17]}\n` : '') + `\nافتح الشيت: ${ss_().getUrl()}`);
       } catch (x) {}
     }
     return json_({ ok: true, no });
@@ -122,8 +129,11 @@ function adminList_(role) {
   if (sh.getLastRow() < 2) return { ok: true, list: [] };
   const rows = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
   const f = d => d ? Utilities.formatDate(new Date(d), 'Asia/Riyadh', 'yyyy-MM-dd HH:mm') : '';
+  if (!sh.getRange(1, 18).getValue()) sh.getRange(1, 18).setValue('الترجمة للعربي');
+  let n = 0;   // ترجمة الطلبات القديمة اللي لسه ماتترجمتش (20 في كل مرة)
+  rows.forEach((r, i) => { if (n < 20 && r[0] && r[11] && r[17] === '') { const t = tr_(r[11]); r[17] = t || '-'; sh.getRange(i + 2, 18).setValue(r[17]); n++; } });
   return { ok: true, list: rows.filter(r => r[0] && (role !== 'legal' || r[2] === 'شكوى')).map(r => ({ no: r[0], date: f(r[1]), type: r[2], iq: String(r[3]), name: r[4], acc: r[5], sup: r[6], city: r[7], phone: String(r[8]),
-    amount: r[9], reason: r[10], details: r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]), by: r[16] || '' })).reverse() };
+    amount: r[9], reason: r[10], details: r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]), by: r[16] || '', tr: r[17] && r[17] !== '-' ? r[17] : '' })).reverse() };
 }
 function adminUpdate_(b, role) {
   if (STATUSES.indexOf(b.status) < 0) return { ok: false, err: 'status' };

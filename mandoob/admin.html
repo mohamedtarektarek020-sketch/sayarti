@@ -94,6 +94,7 @@ bdi{unicode-bidi:isolate}
 .rq .mt{color:var(--muted);font-size:13px;margin-top:3px;line-height:1.7}
 .rq .what{margin-top:10px;font-weight:800;font-size:15.5px}
 .rq .det{margin-top:6px;font-size:14.5px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
+.rq .det.tr{background:var(--accent-soft,#eef2ff);border-radius:10px;padding:8px 10px}
 .rq .act{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:8px}
 .rq .act select,.rq .act textarea{font-size:15px;padding:9px 11px}
 .rq .act textarea{min-height:64px}
@@ -174,7 +175,7 @@ function render() {
   $("list").innerHTML = L.length ? L.map(r => `<div class="rq ${r.type === "سلفة" ? "t-s" : r.type === "آيبان" ? "t-b" : "t-c"}" data-no="${esc(r.no)}">
     <div class="top"><div><div class="nm">${esc(r.name)}</div><div class="mt">إقامة <bdi dir="ltr">${esc(r.iq)}</bdi> · جوال <bdi dir="ltr">${esc(r.phone)}</bdi><br>${esc(r.acc)}${r.sup ? " · المشرف: " + esc(r.sup) : ""}</div></div><span class="pill ${ST[r.status] || "s-new"}">${esc(r.status)}</span></div>
     <div class="what">${r.type === "سلفة" ? "💰 سلفة " + nf(r.amount) + " ريال — " + esc(r.reason) : r.type === "آيبان" ? "🏦 آيبان — " + esc(r.reason) : "📝 شكوى — " + esc(r.reason)}</div>
-    ${r.details ? `<div class="det">${esc(r.details)}</div>` : ""}
+    ${r.details ? `<div class="det">${esc(r.details)}</div>` : ""}${r.tr ? `<div class="det tr"><b>🌐 الترجمة للعربي:</b> ${esc(r.tr)}</div>` : ""}
     <div class="mt">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi>${r.replied ? ` · آخر رد <bdi dir="ltr">${esc(r.replied)}</bdi>` : ""}</div>
     ${r.by ? `<div class="mt">آخر رد بواسطة: <b>${esc(r.by)}</b></div>` : ""}
     ${ROLE === "view" ? (r.reply ? `<div class="det"><b>رد ${esc(r.by || "الإدارة")}:</b> ${esc(r.reply)}</div>` : "") : `<div class="act"><select aria-label="الحالة">${STATUSES.map(s => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select>
@@ -213,8 +214,8 @@ $("advXl").onclick = () => {
   XLSX.writeFile(wb, "كل السلف " + new Date().toISOString().slice(0, 10) + ".xlsx");
 };
 $("xlBtn").onclick = () => {
-  const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "التفاصيل", "الحالة", "رد الإدارة"];
-  const aoa = [H].concat(filtered().map(r => [r.no, r.date, r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, r.amount || "", r.reason, r.details, r.status, r.reply]));
+  const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "التفاصيل", "الترجمة للعربي", "الحالة", "رد الإدارة"];
+  const aoa = [H].concat(filtered().map(r => [r.no, r.date, r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, r.amount || "", r.reason, r.details, r.tr || "", r.status, r.reply]));
   const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] }; const ws = XLSX.utils.aoa_to_sheet(aoa); ws["!views"] = [{ RTL: true }];
   XLSX.utils.book_append_sheet(wb, ws, "الطلبات"); XLSX.writeFile(wb, "طلبات المناديب " + new Date().toISOString().slice(0, 10) + ".xlsx");
 };
