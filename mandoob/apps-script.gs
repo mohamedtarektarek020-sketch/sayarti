@@ -75,6 +75,10 @@ function doPost(e) {
     if (!/^[0-9a-f]{32}$/.test(tok)) return json_({ ok: false, err: 'tok' });
     if (mine.some(r => r[15] && String(r[15]) !== tok)) return json_({ ok: false, err: 'tok' });
     if (mine.filter(r => Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd') === today).length >= MAX_PER_DAY) return json_({ ok: false, err: 'limit' });
+    if (type === 'سلفة') { // طلب سلفة واحد بس كل 24 ساعة
+      const last = Math.max(0, ...mine.filter(r => r[2] === 'سلفة' && r[1]).map(r => new Date(r[1]).getTime()));
+      if (last && Date.now() - last < 864e5) return json_({ ok: false, err: 'wait', next: Utilities.formatDate(new Date(last + 864e5), 'Asia/Riyadh', 'yyyy/MM/dd — h:mm a') });
+    }
     if (type === 'سلفة' && mine.some(r => r[2] === 'سلفة' && (r[12] === 'جديد' || r[12] === 'تحت المراجعة'))) return json_({ ok: false, err: 'open' });
     const no = (type === 'سلفة' ? 'S' : type === 'آيبان' ? 'B' : 'C') + Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyMMdd') + '-' + String(rows.length + 1).padStart(4, '0');
     const row = [no, new Date(), type, "'" + iq, clean_(b.name, 120), clean_(b.acc, 200), clean_(b.sup, 80), clean_(b.city, 60), "'" + clean_(b.phone, 15),

@@ -266,7 +266,7 @@ async function send(p, btn, errId) {
   try {
     const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(p) });
     const j = await r.json();
-    if (!j.ok) { err(errId, ERRS[j.err] || "الطلب ماتبعتش — جرّب تاني."); return; }
+    if (!j.ok) { err(errId, j.err === "wait" ? "قدّمت طلب سلفة خلال آخر 24 ساعة — مسموح بطلب سلفة واحد بس كل 24 ساعة." + (j.next ? " تقدر تقدّم طلب جديد بعد " + j.next + " (في ميعاد السلف من 1 لـ 2 الضهر)." : "") : ERRS[j.err] || "الطلب ماتبعتش — جرّب تاني."); return; }
     $("dTitle").textContent = p.type === "سلفة" ? "تم إرسال طلب السلفة" : p.type === "آيبان" ? "تم إرسال الآيبان" : "تم إرسال الشكوى"; $("dSub").textContent = AUTO[p.type] || "احتفظ برقم الطلب علشان تتابعه من «طلباتي»";
     $("dNo").classList.remove("hidden"); $("dNo").textContent = j.no;
     ["aAmt", "aDet", "cDet", "aIban"].forEach(id => $(id).value = ""); $("ibBank").textContent = ""; $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
