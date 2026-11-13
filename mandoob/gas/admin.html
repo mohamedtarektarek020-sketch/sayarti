@@ -150,8 +150,9 @@ async function load(silent) {
     const j = await call({ action: "admin_list" });
     if (!j.ok) { err(j.err === "pass" ? "كلمة السر غلط (ولو غلطت كتير بيقفل 10 دقايق)." : "حصلت مشكلة — جرّب تاني."); ss.del("tq_admin"); return false; }
     LIST = j.list; ROLE = j.role || "admin"; ss.set("tq_admin", PASS);
+    if (ROLE === "legal") { $("ft").value = "شكوى"; $("ft").disabled = true; }
     $("vLogin").classList.add("hidden"); $("vMain").classList.remove("hidden");
-    $("upd").textContent = (ROLE === "view" ? "👁️ عرض فقط · " : "") + "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    $("upd").textContent = (ROLE === "view" ? "👁️ عرض فقط · " : ROLE === "legal" ? "⚖️ الشؤون القانونية — الشكاوى بس · " : "") + "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
     const sups = [...new Set(LIST.map(r => r.sup).filter(Boolean))].sort();
     const cur = $("fp").value; $("fp").innerHTML = '<option value="">كل المشرفين</option>' + sups.map(s => `<option ${s === cur ? "selected" : ""}>${esc(s)}</option>`).join("");
     render(); return true;
@@ -174,7 +175,8 @@ function render() {
     <div class="what">${r.type === "سلفة" ? "💰 سلفة " + nf(r.amount) + " ريال — " + esc(r.reason) : r.type === "آيبان" ? "🏦 آيبان — " + esc(r.reason) : "📝 شكوى — " + esc(r.reason)}</div>
     ${r.details ? `<div class="det">${esc(r.details)}</div>` : ""}
     <div class="mt">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi>${r.replied ? ` · آخر رد <bdi dir="ltr">${esc(r.replied)}</bdi>` : ""}</div>
-    ${ROLE === "view" ? (r.reply ? `<div class="det"><b>رد الإدارة:</b> ${esc(r.reply)}</div>` : "") : `<div class="act"><select aria-label="الحالة">${STATUSES.map(s => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select>
+    ${r.by ? `<div class="mt">آخر رد بواسطة: <b>${esc(r.by)}</b></div>` : ""}
+    ${ROLE === "view" ? (r.reply ? `<div class="det"><b>رد ${esc(r.by || "الإدارة")}:</b> ${esc(r.reply)}</div>` : "") : `<div class="act"><select aria-label="الحالة">${STATUSES.map(s => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select>
       <textarea aria-label="رد الإدارة" placeholder="الرد اللي هيظهر للمندوب">${esc(r.reply)}</textarea><button type="button">حفظ</button></div>`}</div>`).join("")
     : '<div class="card hint" style="text-align:center;grid-column:1/-1">مافيش طلبات بالفلتر ده.</div>';
 }
@@ -189,7 +191,7 @@ $("list").addEventListener("click", async e => {
 $("goBtn").onclick = () => { PASS = $("pass").value; err(""); load(); };
 $("pass").addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); });
 $("refBtn").onclick = () => load();
-$("outBtn").onclick = () => { ss.del("tq_admin"); PASS = ""; LIST = []; $("pass").value = ""; $("vMain").classList.add("hidden"); $("vLogin").classList.remove("hidden"); };
+$("outBtn").onclick = () => { ss.del("tq_admin"); PASS = ""; LIST = []; ROLE = "admin"; $("ft").disabled = false; $("ft").value = ""; $("pass").value = ""; $("vMain").classList.add("hidden"); $("vLogin").classList.remove("hidden"); };
 $("xlBtn").onclick = () => {
   const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "التفاصيل", "الحالة", "رد الإدارة"];
   const aoa = [H].concat(filtered().map(r => [r.no, r.date, r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, r.amount || "", r.reason, r.details, r.status, r.reply]));

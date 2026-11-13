@@ -320,7 +320,7 @@ async function loadList() {
     const j = await (await fetch(API + "?action=status&iq=" + IQ + "&tok=" + TOK)).json();
     if (!j.ok) throw 0;
     box.innerHTML = j.list.length ? j.list.map(r => `<div class="req"><div class="top"><div class="t1">${r.type === "سلفة" ? "💰 سلفة" + (r.amount ? " — " + Number(r.amount).toLocaleString("en-US") + " ريال" : "") : r.type === "آيبان" ? "🏦 آيبان — " + esc(r.reason) : "📝 شكوى — " + esc(r.reason)}</div><span class="pill ${ST[r.status] || "s-new"}">${esc(r.status)}</span></div>
-      <div class="t2">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>رد الإدارة:</b> ${esc(r.reply)}</div>` : (r.status === "جديد" || r.status === "تحت المراجعة") && AUTO[r.type] ? `<div class="rep auto"><b>🤖 رد تلقائي:</b> ${AUTO[r.type]}</div>` : ""}</div>`).join("")
+      <div class="t2">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>${r.by === "الشؤون القانونية" ? "⚖️ رد الشؤون القانونية" : "رد الإدارة"}:</b> ${esc(r.reply)}</div>` : (r.status === "جديد" || r.status === "تحت المراجعة") && AUTO[r.type] ? `<div class="rep auto"><b>🤖 رد تلقائي:</b> ${AUTO[r.type]}</div>` : ""}</div>`).join("")
       : '<div class="card hint" style="text-align:center">لسه مقدمتش أي طلبات.</div>';
   } catch (e) { box.innerHTML = '<div class="card hint" style="text-align:center">مقدرناش نجيب الطلبات دلوقتي — جرّب تاني بعد شوية.</div>'; }
 }

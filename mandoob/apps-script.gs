@@ -9,10 +9,11 @@ const SS_ID = '';   // رقم الشيت (من رابطه بين /d/ و /edit) �
 const SHEET = 'الطلبات';
 const ss_ = () => SS_ID ? SpreadsheetApp.openById(SS_ID) : SpreadsheetApp.getActive();
 const HEAD = ['رقم الطلب', 'التاريخ', 'النوع', 'رقم الإقامة', 'الاسم', 'المنصة / الحساب', 'المشرف', 'المدينة', 'الجوال',
-  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق'];
+  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق', 'رد بواسطة'];
 const STATUSES = ['جديد', 'تحت المراجعة', 'تمت الموافقة', 'مرفوض', 'تم الحل'];
 const ADMIN_PASS = 'غيّر-الكلمة-دي';   // ⚠️ اكتب هنا كلمة سر صفحة الإدارة (8 حروف أو أكتر)
 const VIEW_PASS = '';   // كلمة سر للإدارة: يشوفوا الطلبات بس من غير ما يغيروا حاجة (تقدر تغيرها، 8 حروف أو أكتر)
+const LEGAL_PASS = '';   // كلمة سر الشؤون القانونية: بيشوفوا الشكاوى بس ويردّوا عليها (8 حروف أو أكتر)
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
 const MAX_PER_DAY = 3;
 const ADV_FROM = 13, ADV_TO = 14;   // طلبات السلف متاحة يوميًا من 1 لـ 2 الضهر بتوقيت السعودية
@@ -47,9 +48,9 @@ function doPost(e) {
   if (b.action === 'status') return json_(status_(clean_(b.iq, 10), clean_(b.tok, 40)));
   if (b.action === 'admin_list' || b.action === 'admin_update') {
     const role = adminOk_(b.pass); if (!role) return json_({ ok: false, err: 'pass' });
-    if (b.action === 'admin_update' && role !== 'admin') return json_({ ok: false, err: 'role' });
-    if (b.action === 'admin_list') { const o = adminList_(); o.role = role; return json_(o); }
-    return json_(adminUpdate_(b));
+    if (b.action === 'admin_update' && role !== 'admin' && role !== 'legal') return json_({ ok: false, err: 'role' });
+    if (b.action === 'admin_list') { const o = adminList_(role); o.role = role; return json_(o); }
+    return json_(adminUpdate_(b, role));
   }
   if (b.action !== 'submit') return json_({ ok: false, err: 'bad' });
   const iq = clean_(b.iq, 10);
@@ -97,7 +98,7 @@ function status_(iq, tok) {
   if (sh.getLastRow() < 2) return { ok: true, list: [] };
   const rows = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
   const list = rows.filter(r => String(r[3]) === iq && String(r[15]) === tok).map(r => ({
-    no: r[0], date: Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd'), type: r[2], amount: r[9], reason: r[10], status: r[12] || 'جديد', reply: r[13] || ''
+    no: r[0], date: Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd'), type: r[2], amount: r[9], reason: r[10], status: r[12] || 'جديد', reply: r[13] || '', by: r[16] || ''
   })).reverse().slice(0, 20);
   return { ok: true, list };
 }
@@ -109,24 +110,28 @@ function adminOk_(pass) {
   if (fails >= 10) return false;                       // بعد 10 محاولات غلط يقفل 10 دقايق
   if (ADMIN_PASS.length >= 8 && ADMIN_PASS !== 'غيّر-الكلمة-دي' && String(pass) === ADMIN_PASS) return 'admin';
   if (VIEW_PASS.length >= 8 && String(pass) === VIEW_PASS) return 'view';
+  if (LEGAL_PASS.length >= 8 && String(pass) === LEGAL_PASS) return 'legal';
   c.put(k, String(fails + 1), 600); return false;
 }
-function adminList_() {
+function adminList_(role) {
   const sh = ss_().getSheetByName(SHEET);
   if (sh.getLastRow() < 2) return { ok: true, list: [] };
   const rows = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
   const f = d => d ? Utilities.formatDate(new Date(d), 'Asia/Riyadh', 'yyyy-MM-dd HH:mm') : '';
-  return { ok: true, list: rows.filter(r => r[0]).map(r => ({ no: r[0], date: f(r[1]), type: r[2], iq: String(r[3]), name: r[4], acc: r[5], sup: r[6], city: r[7], phone: String(r[8]),
-    amount: r[9], reason: r[10], details: r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]) })).reverse() };
+  return { ok: true, list: rows.filter(r => r[0] && (role !== 'legal' || r[2] === 'شكوى')).map(r => ({ no: r[0], date: f(r[1]), type: r[2], iq: String(r[3]), name: r[4], acc: r[5], sup: r[6], city: r[7], phone: String(r[8]),
+    amount: r[9], reason: r[10], details: r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]), by: r[16] || '' })).reverse() };
 }
-function adminUpdate_(b) {
+function adminUpdate_(b, role) {
   if (STATUSES.indexOf(b.status) < 0) return { ok: false, err: 'status' };
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
     const sh = ss_().getSheetByName(SHEET);
     const nos = sh.getRange(2, 1, Math.max(1, sh.getLastRow() - 1), 1).getValues().map(r => String(r[0]));
     const i = nos.indexOf(String(b.no)); if (i < 0) return { ok: false, err: 'no' };
+    if (role === 'legal' && String(sh.getRange(i + 2, 3).getValue()) !== 'شكوى') return { ok: false, err: 'role' };
     sh.getRange(i + 2, 13, 1, 3).setValues([[b.status, clean_(b.reply, 800), new Date()]]);
+    if (!sh.getRange(1, 17).getValue()) sh.getRange(1, 17).setValue('رد بواسطة');
+    sh.getRange(i + 2, 17).setValue(role === 'legal' ? 'الشؤون القانونية' : 'الإدارة');
     return { ok: true };
   } finally { lock.releaseLock(); }
 }
