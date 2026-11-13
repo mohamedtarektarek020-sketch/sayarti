@@ -8,7 +8,7 @@
 <title>طلبات المناديب</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&family=Noto+Sans+Bengali:wght@400;600;700&display=swap" rel="stylesheet">
 <style>
 :root{
   --bg:#f4f3fb; --card:#ffffff; --ink:#1c1a3a; --muted:#6b6890; --line:#e6e4f3;
@@ -28,11 +28,14 @@
   --money:#5eead4; --money-bg:#0f2f2c; color-scheme:dark}
 *{box-sizing:border-box}
 html,body{margin:0}
-body{background:var(--bg);color:var(--ink);font-family:"Tajawal",system-ui,sans-serif;font-size:16px;min-height:100vh;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--ink);font-family:"Tajawal","Noto Sans Bengali",system-ui,sans-serif;font-size:16px;min-height:100vh;-webkit-tap-highlight-color:transparent}
 .wrap{max-width:520px;margin:0 auto;padding:0 max(16px,env(safe-area-inset-right,0px)) 40px max(16px,env(safe-area-inset-left,0px))}
 .hero{background:linear-gradient(150deg,var(--hero1),var(--hero2));color:#fff;padding:calc(26px + env(safe-area-inset-top,0px)) 20px 70px;text-align:center;border-radius:0 0 28px 28px}
 .hero .logo{width:58px;height:58px;border-radius:18px;background:rgba(255,255,255,.15);display:inline-flex;align-items:center;justify-content:center;font-size:30px;margin-bottom:10px}
 .hero h1{margin:0;font-size:24px;font-weight:800}
+.langs{display:flex;gap:6px;justify-content:center;margin:0 0 14px}
+.langs button{border:1px solid rgba(255,255,255,.45);background:transparent;color:#fff;border-radius:999px;padding:5px 14px;font:inherit;font-size:14px;font-weight:700;cursor:pointer}
+.langs button[aria-pressed="true"]{background:#fff;color:var(--hero2)}
 .hero p{margin:6px 0 0;opacity:.85;font-size:14.5px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px;box-shadow:0 8px 28px rgba(30,20,90,.08)}
 .lift{margin-top:-46px}
@@ -88,18 +91,18 @@ bdi{unicode-bidi:isolate}
 </style>
 </head>
 <body>
-<div class="hero"><div class="logo">🧾</div><h1>طلبات المناديب</h1><p id="heroSub">طلب سلفة أو تقديم شكوى</p></div>
+<div class="hero"><div class="langs" role="group" aria-label="Language"><button type="button" data-lang="ar">عربي</button><button type="button" data-lang="en">English</button><button type="button" data-lang="bn">বাংলা</button></div><div class="logo">🧾</div><h1 data-t="title">طلبات المناديب</h1><p id="heroSub">طلب سلفة أو تقديم شكوى</p></div>
 <div class="wrap">
 
   <!-- الدخول -->
   <section id="vLogin" class="card lift">
-    <label for="iqama">رقم الإقامة</label>
+    <label for="iqama" data-t="iqLabel">رقم الإقامة</label>
     <input id="iqama" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="2xxxxxxxxx">
-    <div class="hint" id="iqHint">اكتب رقم الإقامة بتاعك (10 أرقام) علشان تدخل.</div>
+    <div class="hint" id="iqHint" data-t="iqHint">اكتب رقم الإقامة بتاعك (10 أرقام) علشان تدخل.</div>
     <div id="bdBox" class="hidden">
-      <label>تاريخ الميلاد (زي ما هو في الإقامة)</label>
-      <div class="bd"><select id="bdD" aria-label="اليوم"></select><select id="bdM" aria-label="الشهر"></select><select id="bdY" aria-label="السنة"></select></div>
-      <div class="hint">للتأكد إنك صاحب الإقامة.</div>
+      <label data-t="bdLabel">تاريخ الميلاد (زي ما هو في الإقامة)</label>
+      <div class="bd"><select id="bdD" aria-label="اليوم" data-ta="day"></select><select id="bdM" aria-label="الشهر" data-ta="month"></select><select id="bdY" aria-label="السنة" data-ta="year"></select></div>
+      <div class="hint" data-t="bdHint">للتأكد إنك صاحب الإقامة.</div>
     </div>
     <button class="main" id="goBtn" type="button">التالي</button>
     <div class="err" id="err"></div>
@@ -107,45 +110,45 @@ bdi{unicode-bidi:isolate}
 
   <!-- الاختيارات -->
   <section id="vHome" class="hidden">
-    <div class="card lift"><div class="who"><div><div class="nm" id="whoName"></div><div class="meta" id="whoMeta"></div></div><button class="ghost" id="outBtn" type="button">خروج</button></div></div>
+    <div class="card lift"><div class="who"><div><div class="nm" id="whoName"></div><div class="meta" id="whoMeta"></div></div><button class="ghost" id="outBtn" type="button" data-t="logout">خروج</button></div></div>
     <div class="choices">
-      <button class="choice" type="button" data-go="adv"><span class="ic m">💰</span><span><div class="t1">طلب سلفة</div><div class="t2">اطلب مبلغ مقدم وبيتخصم من راتبك</div></span></button>
-      <button class="choice" type="button" data-go="cmp"><span class="ic c">📝</span><span><div class="t1">تقديم شكوى</div><div class="t2">راتب، خصم، بنزين، سيارة، مشرف أو أي مشكلة</div></span></button>
-      <button class="choice" type="button" data-go="list"><span class="ic l">📋</span><span><div class="t1">طلباتي</div><div class="t2">تابع حالة الطلبات اللي قدمتها</div></span></button>
+      <button class="choice" type="button" data-go="adv"><span class="ic m">💰</span><span><div class="t1" data-t="advT1">طلب سلفة</div><div class="t2">اطلب مبلغ مقدم وبيتخصم من راتبك</div></span></button>
+      <button class="choice" type="button" data-go="cmp"><span class="ic c">📝</span><span><div class="t1" data-t="cmpT1">تقديم شكوى</div><div class="t2" data-t="cmpT2">راتب، خصم، بنزين، سيارة، مشرف أو أي مشكلة</div></span></button>
+      <button class="choice" type="button" data-go="list"><span class="ic l">📋</span><span><div class="t1" data-t="listT1">طلباتي</div><div class="t2" data-t="listT2">تابع حالة الطلبات اللي قدمتها</div></span></button>
     </div>
   </section>
 
   <!-- السلفة -->
   <section id="vAdv" class="hidden">
-    <button class="back" type="button" data-go="home">→ رجوع</button>
-    <div class="card"><h2>💰 طلب سلفة</h2>
-      <label for="aAmt">المبلغ المطلوب (ريال)</label><input id="aAmt" type="number" inputmode="numeric" min="1" max="20000" placeholder="مثلاً 500">
-      <label for="aReason">سبب السلفة</label>
-      <select id="aReason"><option value="">اختار السبب</option><option>ظروف عائلية</option><option>علاج</option><option>إيجار سكن</option><option>سفر / إجازة</option><option>مصاريف السيارة</option><option>أخرى</option></select>
-      <label for="aDet">تفاصيل (اختياري)</label><textarea id="aDet" maxlength="1500" placeholder="اكتب أي تفاصيل تساعد في الموافقة"></textarea>
+    <button class="back" type="button" data-go="home" data-t="back">→ رجوع</button>
+    <div class="card"><h2 data-t="advH">💰 طلب سلفة</h2>
+      <label for="aAmt" data-t="amt">المبلغ المطلوب (ريال)</label><input id="aAmt" type="number" inputmode="numeric" min="1" max="20000" placeholder="مثلاً 500" data-tp="amtPh">
+      <label for="aReason" data-t="reason">سبب السلفة</label>
+      <select id="aReason"><option value="" data-t="chooseReason">اختار السبب</option><option value="ظروف عائلية" data-t="ظروف عائلية">ظروف عائلية</option><option value="علاج" data-t="علاج">علاج</option><option value="إيجار سكن" data-t="إيجار سكن">إيجار سكن</option><option value="سفر / إجازة" data-t="سفر / إجازة">سفر / إجازة</option><option value="مصاريف السيارة" data-t="مصاريف السيارة">مصاريف السيارة</option><option value="أخرى" data-t="أخرى">أخرى</option></select>
+      <label for="aDet" data-t="det">تفاصيل (اختياري)</label><textarea id="aDet" maxlength="1500" placeholder="اكتب أي تفاصيل تساعد في الموافقة" data-tp="detPh"></textarea>
       <div class="ibbox">
-        <label for="aIban">🏦 الآيبان اللي هتنزل عليه السلفة</label>
+        <label for="aIban" data-t="ibLabel">🏦 الآيبان اللي هتنزل عليه السلفة</label>
         <div class="hint" id="ibNow"></div>
         <input id="aIban" dir="ltr" autocomplete="off" autocapitalize="characters" maxlength="34" placeholder="SA00 0000 0000 0000 0000 0000" style="text-align:left;letter-spacing:.5px">
         <div class="hint" id="ibBank"></div>
-        <div class="hint">لازم يكون الآيبان باسمك إنت.</div>
+        <div class="hint" data-t="ibMine">لازم يكون الآيبان باسمك إنت.</div>
       </div>
-      <label for="aPh">رقم الجوال</label><input id="aPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
-      <label class="chk"><input type="checkbox" id="aOk"> أوافق إن مبلغ السلفة يتخصم من راتبي حسب نظام الشركة، وإن بيانات الحساب البنكي صحيحة.</label>
-      <button class="main" id="aSend" type="button">إرسال طلب السلفة</button>
+      <label for="aPh" data-t="phone">رقم الجوال</label><input id="aPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
+      <label class="chk"><input type="checkbox" id="aOk"> <span data-t="agree">أوافق إن مبلغ السلفة يتخصم من راتبي حسب نظام الشركة، وإن بيانات الحساب البنكي صحيحة.</span></label>
+      <button class="main" id="aSend" type="button" data-t="advSend">إرسال طلب السلفة</button>
       <div class="err" id="aErr"></div>
     </div>
   </section>
 
   <!-- الشكوى -->
   <section id="vCmp" class="hidden">
-    <button class="back" type="button" data-go="home">→ رجوع</button>
-    <div class="card"><h2>📝 تقديم شكوى</h2>
-      <label for="cCat">نوع الشكوى</label>
-      <select id="cCat"><option value="">اختار النوع</option><option>الراتب</option><option>خصم أو مديونية</option><option>البنزين / الشريحة</option><option>السيارة</option><option>المشرف</option><option>التطبيق / الحساب</option><option>أخرى</option></select>
-      <label for="cDet">اكتب الشكوى بالتفصيل</label><textarea id="cDet" maxlength="1500" placeholder="إيه المشكلة؟ وإمتى حصلت؟"></textarea>
-      <label for="cPh">رقم الجوال</label><input id="cPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
-      <button class="main" id="cSend" type="button">إرسال الشكوى</button>
+    <button class="back" type="button" data-go="home" data-t="back">→ رجوع</button>
+    <div class="card"><h2 data-t="cmpH">📝 تقديم شكوى</h2>
+      <label for="cCat" data-t="cCat">نوع الشكوى</label>
+      <select id="cCat"><option value="" data-t="chooseType">اختار النوع</option><option value="الراتب" data-t="الراتب">الراتب</option><option value="خصم أو مديونية" data-t="خصم أو مديونية">خصم أو مديونية</option><option value="البنزين / الشريحة" data-t="البنزين / الشريحة">البنزين / الشريحة</option><option value="السيارة" data-t="السيارة">السيارة</option><option value="المشرف" data-t="المشرف">المشرف</option><option value="التطبيق / الحساب" data-t="التطبيق / الحساب">التطبيق / الحساب</option><option value="أخرى" data-t="أخرى">أخرى</option></select>
+      <label for="cDet" data-t="cDet">اكتب الشكوى بالتفصيل</label><textarea id="cDet" maxlength="1500" placeholder="إيه المشكلة؟ وإمتى حصلت؟" data-tp="cDetPh"></textarea>
+      <label for="cPh" data-t="phone">رقم الجوال</label><input id="cPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
+      <button class="main" id="cSend" type="button" data-t="cSend">إرسال الشكوى</button>
       <div class="err" id="cErr"></div>
     </div>
   </section>
@@ -153,13 +156,13 @@ bdi{unicode-bidi:isolate}
   <!-- تم -->
   <section id="vDone" class="hidden">
     <div class="card lift done"><div class="big">✅</div><h2 id="dTitle">تم إرسال طلبك</h2><div class="hint" id="dSub">احتفظ برقم الطلب علشان تتابعه</div><div class="no" id="dNo"></div>
-            <button class="main" type="button" data-go="list">طلباتي</button><button class="ghost" style="width:100%;margin-top:10px;padding:12px" type="button" data-go="home">الرجوع للرئيسية</button></div>
+            <button class="main" type="button" data-go="list" data-t="listT1">طلباتي</button><button class="ghost" style="width:100%;margin-top:10px;padding:12px" type="button" data-go="home" data-t="goHome">الرجوع للرئيسية</button></div>
   </section>
 
   <!-- طلباتي -->
   <section id="vList" class="hidden">
-    <button class="back" type="button" data-go="home">→ رجوع</button>
-    <h2 style="margin:0 4px 10px">📋 طلباتي</h2>
+    <button class="back" type="button" data-go="home" data-t="back">→ رجوع</button>
+    <h2 style="margin:0 4px 10px" data-t="listH">📋 طلباتي</h2>
     <div id="lBox"></div>
   </section>
 
@@ -170,6 +173,121 @@ bdi{unicode-bidi:isolate}
 // رابط Google Apps Script بعد النشر (Web app)
 const API = "<?= url ?>";
 const SALT = "drivers-requests-v1";
+
+/* ===== اللغات: عربي / English / বাংলা ===== */
+const L = {
+  title: ["طلبات المناديب", "Driver Requests", "ড্রাইভারদের আবেদন"],
+  heroSub: ["طلب سلفة أو تقديم شكوى", "Request an advance or submit a complaint", "অগ্রিম টাকার আবেদন বা অভিযোগ জমা দিন"],
+  hello: ["أهلاً {0}", "Welcome, {0}", "স্বাগতম, {0}"],
+  iqLabel: ["رقم الإقامة", "Iqama number", "ইকামা নম্বর"],
+  iqHint: ["اكتب رقم الإقامة بتاعك (10 أرقام) علشان تدخل.", "Enter your Iqama number (10 digits) to sign in.", "প্রবেশ করতে আপনার ইকামা নম্বর (10 সংখ্যা) লিখুন।"],
+  bdLabel: ["تاريخ الميلاد (زي ما هو في الإقامة)", "Date of birth (as on your Iqama)", "জন্ম তারিখ (ইকামায় যেমন আছে)"],
+  bdHint: ["للتأكد إنك صاحب الإقامة.", "To confirm the Iqama is yours.", "ইকামাটি আপনার কিনা নিশ্চিত করার জন্য।"],
+  day: ["اليوم", "Day", "দিন"], month: ["الشهر", "Month", "মাস"], year: ["السنة", "Year", "বছর"],
+  months: [["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"],
+    ["January","February","March","April","May","June","July","August","September","October","November","December"],
+    ["জানুয়ারি","ফেব্রুয়ারি","মার্চ","এপ্রিল","মে","জুন","জুলাই","আগস্ট","সেপ্টেম্বর","অক্টোবর","নভেম্বর","ডিসেম্বর"]],
+  next: ["التالي", "Next", "পরবর্তী"], signIn: ["دخول", "Sign in", "প্রবেশ করুন"], logout: ["خروج", "Sign out", "বের হন"],
+  searching: ["جاري البحث...", "Searching...", "খোঁজা হচ্ছে..."], verifying: ["جاري التحقق...", "Verifying...", "যাচাই করা হচ্ছে..."],
+  sending: ["جاري الإرسال...", "Sending...", "পাঠানো হচ্ছে..."], loading: ["جاري التحميل...", "Loading...", "লোড হচ্ছে..."],
+  driver: ["مندوب", "Driver", "ড্রাইভার"], iqShort: ["الإقامة", "Iqama", "ইকামা"], supShort: ["المشرف", "Supervisor", "সুপারভাইজার"],
+  advT1: ["طلب سلفة", "Request an advance", "অগ্রিম টাকার আবেদন"],
+  advT2: ["اطلب مبلغ مقدم وبيتخصم من راتبك", "Get money in advance, deducted from your salary", "অগ্রিম টাকা নিন, যা আপনার বেতন থেকে কাটা হবে"],
+  cmpT1: ["تقديم شكوى", "Submit a complaint", "অভিযোগ জমা দিন"],
+  cmpT2: ["راتب، خصم، بنزين، سيارة، مشرف أو أي مشكلة", "Salary, deduction, fuel, car, supervisor or any problem", "বেতন, কর্তন, পেট্রোল, গাড়ি, সুপারভাইজার বা যেকোনো সমস্যা"],
+  listT1: ["طلباتي", "My requests", "আমার আবেদনসমূহ"],
+  listT2: ["تابع حالة الطلبات اللي قدمتها", "Track the status of your requests", "আপনার আবেদনের অবস্থা দেখুন"],
+  back: ["→ رجوع", "← Back", "← ফিরে যান"],
+  advH: ["💰 طلب سلفة", "💰 Advance request", "💰 অগ্রিম টাকার আবেদন"],
+  amt: ["المبلغ المطلوب (ريال)", "Amount requested (SAR)", "চাওয়া টাকার পরিমাণ (রিয়াল)"],
+  amtPh: ["مثلاً 500", "e.g. 500", "যেমন 500"],
+  reason: ["سبب السلفة", "Reason for the advance", "অগ্রিমের কারণ"],
+  chooseReason: ["اختار السبب", "Choose a reason", "কারণ বেছে নিন"],
+  "ظروف عائلية": ["ظروف عائلية", "Family circumstances", "পারিবারিক প্রয়োজন"],
+  "علاج": ["علاج", "Medical treatment", "চিকিৎসা"],
+  "إيجار سكن": ["إيجار سكن", "Housing rent", "বাসা ভাড়া"],
+  "سفر / إجازة": ["سفر / إجازة", "Travel / vacation", "ভ্রমণ / ছুটি"],
+  "مصاريف السيارة": ["مصاريف السيارة", "Car expenses", "গাড়ির খরচ"],
+  "أخرى": ["أخرى", "Other", "অন্যান্য"],
+  det: ["تفاصيل (اختياري)", "Details (optional)", "বিস্তারিত (ঐচ্ছিক)"],
+  detPh: ["اكتب أي تفاصيل تساعد في الموافقة", "Add any details that help with the approval", "অনুমোদনে সাহায্য করবে এমন যেকোনো তথ্য লিখুন"],
+  ibLabel: ["🏦 الآيبان اللي هتنزل عليه السلفة", "🏦 IBAN to receive the advance", "🏦 যে IBAN-এ অগ্রিম টাকা পাঠানো হবে"],
+  ibMine: ["لازم يكون الآيبان باسمك إنت.", "The IBAN must be in your own name.", "IBAN অবশ্যই আপনার নিজের নামে হতে হবে।"],
+  ibNowHas: ["الآيبان المسجل عندنا بينتهي بـ {0} — اكتبه كامل للتأكيد، أو اكتب الجديد لو اتغيّر.", "The IBAN we have ends in {0} — type it in full to confirm, or enter a new one if it changed.", "আমাদের কাছে থাকা IBAN-এর শেষ অংশ {0} — নিশ্চিত করতে পুরোটা লিখুন, বা পরিবর্তন হলে নতুনটি লিখুন।"],
+  ibNowNone: ["اكتب رقم الآيبان بتاعك علشان السلفة تتحول عليه.", "Enter your IBAN so the advance can be transferred to it.", "অগ্রিম টাকা পাঠানোর জন্য আপনার IBAN লিখুন।"],
+  ibGood: [" ✔ الرقم صحيح", " ✔ Valid number", " ✔ নম্বর সঠিক"], ibBad: [" ✖ الرقم فيه غلط", " ✖ Number is incorrect", " ✖ নম্বরে ভুল আছে"],
+  phone: ["رقم الجوال", "Mobile number", "মোবাইল নম্বর"],
+  agree: ["أوافق إن مبلغ السلفة يتخصم من راتبي حسب نظام الشركة، وإن بيانات الحساب البنكي صحيحة.", "I agree that the advance will be deducted from my salary according to company policy, and that my bank details are correct.", "আমি সম্মত যে কোম্পানির নিয়ম অনুযায়ী অগ্রিমের টাকা আমার বেতন থেকে কাটা হবে, এবং আমার ব্যাংকের তথ্য সঠিক।"],
+  advSend: ["إرسال طلب السلفة", "Send advance request", "অগ্রিমের আবেদন পাঠান"],
+  cmpH: ["📝 تقديم شكوى", "📝 Submit a complaint", "📝 অভিযোগ জমা দিন"],
+  cCat: ["نوع الشكوى", "Complaint type", "অভিযোগের ধরন"], chooseType: ["اختار النوع", "Choose a type", "ধরন বেছে নিন"],
+  "الراتب": ["الراتب", "Salary", "বেতন"], "خصم أو مديونية": ["خصم أو مديونية", "Deduction or debt", "কর্তন বা ঋণ"],
+  "البنزين / الشريحة": ["البنزين / الشريحة", "Fuel / fuel card", "পেট্রোল / ফুয়েল কার্ড"], "السيارة": ["السيارة", "Car", "গাড়ি"],
+  "المشرف": ["المشرف", "Supervisor", "সুপারভাইজার"], "التطبيق / الحساب": ["التطبيق / الحساب", "App / account", "অ্যাপ / অ্যাকাউন্ট"],
+  cDet: ["اكتب الشكوى بالتفصيل", "Describe your complaint in detail", "আপনার অভিযোগ বিস্তারিত লিখুন"],
+  cDetPh: ["إيه المشكلة؟ وإمتى حصلت؟", "What is the problem? When did it happen?", "সমস্যা কী? কখন হয়েছে?"],
+  cSend: ["إرسال الشكوى", "Send complaint", "অভিযোগ পাঠান"],
+  doneDef: ["تم إرسال طلبك", "Your request was sent", "আপনার আবেদন পাঠানো হয়েছে"],
+  doneAdv: ["تم إرسال طلب السلفة", "Advance request sent", "অগ্রিমের আবেদন পাঠানো হয়েছে"],
+  doneCmp: ["تم إرسال الشكوى", "Complaint sent", "অভিযোগ পাঠানো হয়েছে"],
+  doneIb: ["تم إرسال الآيبان", "IBAN sent", "IBAN পাঠানো হয়েছে"],
+  keepNo: ["احتفظ برقم الطلب علشان تتابعه من «طلباتي»", "Keep the request number to follow it up in \"My requests\"", "\"আমার আবেদনসমূহ\"-এ দেখার জন্য আবেদন নম্বরটি রাখুন"],
+  goHome: ["الرجوع للرئيسية", "Back to home", "হোমে ফিরে যান"],
+  listH: ["📋 طلباتي", "📋 My requests", "📋 আমার আবেদনসমূহ"],
+  advHours: ["طلب السلفة متاح يوميًا من الساعة 10 الصبح لحد الساعة 1 الضهر بس.", "Advance requests are available daily from 10 AM to 1 PM only.", "অগ্রিমের আবেদন প্রতিদিন শুধু সকাল 10টা থেকে দুপুর 1টা পর্যন্ত করা যায়।"],
+  advOpenNow: ["متاح دلوقتي لحد الساعة 1 الضهر — اطلب مبلغ مقدم وبيتخصم من راتبك", "Open now until 1 PM — get money in advance, deducted from your salary", "এখন দুপুর 1টা পর্যন্ত খোলা — অগ্রিম টাকা নিন, যা বেতন থেকে কাটা হবে"],
+  autoAdv: ["طلبك تحت المراجعة وسيتم الرد عليك في أقرب وقت ✅", "Your request is under review and you will get a reply as soon as possible ✅", "আপনার আবেদন পর্যালোচনা করা হচ্ছে, যত দ্রুত সম্ভব উত্তর দেওয়া হবে ✅"],
+  autoCmp: ["تم استلام شكواك ✅ وسيتم مراجعتها والرد عليك في أقرب وقت. شكرًا لتواصلك معنا.", "We received your complaint ✅ It will be reviewed and you will get a reply as soon as possible. Thank you for contacting us.", "আমরা আপনার অভিযোগ পেয়েছি ✅ এটি পর্যালোচনা করে যত দ্রুত সম্ভব উত্তর দেওয়া হবে। যোগাযোগ করার জন্য ধন্যবাদ।"],
+  autoIb: ["تم استلام الآيبان ✅ وهيتم مراجعته.", "We received your IBAN ✅ It will be reviewed.", "আমরা আপনার IBAN পেয়েছি ✅ এটি পর্যালোচনা করা হবে।"],
+  autoLbl: ["🤖 رد تلقائي", "🤖 Automatic reply", "🤖 স্বয়ংক্রিয় উত্তর"],
+  replyAdmin: ["رد الإدارة", "Management reply", "ব্যবস্থাপনার উত্তর"],
+  replyLegal: ["⚖️ رد الشؤون القانونية", "⚖️ Legal Affairs reply", "⚖️ আইন বিভাগের উত্তর"],
+  reqNo: ["رقم الطلب", "Request no.", "আবেদন নম্বর"],
+  tAdv: ["💰 سلفة", "💰 Advance", "💰 অগ্রিম"], tCmp: ["📝 شكوى", "📝 Complaint", "📝 অভিযোগ"], tIb: ["🏦 آيبان", "🏦 IBAN", "🏦 IBAN"],
+  sar: ["ريال", "SAR", "রিয়াল"],
+  "جديد": ["جديد", "New", "নতুন"], "تحت المراجعة": ["تحت المراجعة", "Under review", "পর্যালোচনাধীন"], "تمت الموافقة": ["تمت الموافقة", "Approved", "অনুমোদিত"],
+  "مرفوض": ["مرفوض", "Rejected", "প্রত্যাখ্যাত"], "تم الحل": ["تم الحل", "Resolved", "সমাধান হয়েছে"],
+  noReqs: ["لسه مقدمتش أي طلبات.", "You have not sent any requests yet.", "আপনি এখনও কোনো আবেদন করেননি।"],
+  listSoon: ["متابعة الطلبات هتشتغل قريب.", "Request tracking will be available soon.", "আবেদন দেখার সুবিধা শীঘ্রই চালু হবে।"],
+  listFail: ["مقدرناش نجيب الطلبات دلوقتي — جرّب تاني بعد شوية.", "We could not load your requests right now — please try again later.", "এখন আপনার আবেদনগুলো লোড করা যায়নি — একটু পরে আবার চেষ্টা করুন।"],
+  eTryHours: [" جرّب تاني في الميعاد.", " Please try again during these hours.", " অনুগ্রহ করে এই সময়ের মধ্যে আবার চেষ্টা করুন।"],
+  e_advday: ["قدّمت طلب سلفة النهارده — مسموح بطلب سلفة واحد بس في اليوم. تقدر تقدّم طلب جديد بكره من الساعة 10 الصبح لـ 1 الضهر.", "You already sent an advance request today — only one advance request is allowed per day. You can send a new one tomorrow from 10 AM to 1 PM.", "আপনি আজ ইতিমধ্যে অগ্রিমের আবেদন করেছেন — দিনে শুধু একটি আবেদন করা যায়। আগামীকাল সকাল 10টা থেকে দুপুর 1টার মধ্যে নতুন আবেদন করতে পারবেন।"],
+  e_cmpday: ["قدّمت شكوتين النهارده — الحد الأقصى شكوتين في اليوم. تقدر تقدّم شكوى جديدة بكره.", "You already sent two complaints today — the maximum is two per day. You can send a new complaint tomorrow.", "আপনি আজ ইতিমধ্যে দুটি অভিযোগ করেছেন — দিনে সর্বোচ্চ দুটি। আগামীকাল নতুন অভিযোগ করতে পারবেন।"],
+  e_tok: ["البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", "These details do not match earlier requests for this Iqama. Please contact your supervisor.", "এই তথ্য একই ইকামার আগের আবেদনের সাথে মেলে না। আপনার সুপারভাইজারের সাথে যোগাযোগ করুন।"],
+  e_limit: ["وصلت للحد الأقصى للطلبات النهارده. جرّب بكره.", "You reached today's request limit. Please try tomorrow.", "আজকের আবেদনের সীমা শেষ। আগামীকাল চেষ্টা করুন।"],
+  e_open: ["عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", "You have an advance request still under review. Please wait for its reply first.", "আপনার একটি অগ্রিমের আবেদন এখনও পর্যালোচনাধীন। আগে সেটির উত্তরের জন্য অপেক্ষা করুন।"],
+  e_amount: ["اكتب مبلغ صحيح.", "Enter a valid amount.", "সঠিক পরিমাণ লিখুন।"],
+  e_iban: ["رقم الآيبان مش صحيح — راجعه من تطبيق البنك.", "The IBAN is not valid — check it in your bank app.", "IBAN সঠিক নয় — আপনার ব্যাংক অ্যাপ থেকে যাচাই করুন।"],
+  e_details: ["اكتب تفاصيل الشكوى.", "Write the complaint details.", "অভিযোগের বিস্তারিত লিখুন।"],
+  e_iq: ["رقم الإقامة مش صحيح.", "The Iqama number is not valid.", "ইকামা নম্বর সঠিক নয়।"],
+  e_generic: ["الطلب ماتبعتش — جرّب تاني.", "The request was not sent — please try again.", "আবেদন পাঠানো যায়নি — আবার চেষ্টা করুন।"],
+  e_net: ["مفيش اتصال دلوقتي — اتأكد من النت وجرّب تاني.", "No connection right now — check your internet and try again.", "এখন সংযোগ নেই — ইন্টারনেট চেক করে আবার চেষ্টা করুন।"],
+  e_notReady: ["الخدمة لسه بتتجهز — جرّب تاني بعد شوية.", "The service is not ready yet — please try again later.", "সেবাটি এখনও প্রস্তুত হয়নি — একটু পরে আবার চেষ্টা করুন।"],
+  e_bdPick: ["اختار اليوم والشهر والسنة.", "Choose the day, month and year.", "দিন, মাস ও বছর বেছে নিন।"],
+  e_bdWrong: ["تاريخ الميلاد مش مطابق لبيانات الإقامة. اتأكد منه وجرّب تاني، ولو المشكلة مستمرة كلم المشرف بتاعك.", "The date of birth does not match the Iqama details. Check it and try again; if the problem continues, contact your supervisor.", "জন্ম তারিখ ইকামার তথ্যের সাথে মেলেনি। যাচাই করে আবার চেষ্টা করুন; সমস্যা থাকলে আপনার সুপারভাইজারের সাথে যোগাযোগ করুন।"],
+  e_iqFmt: ["رقم الإقامة لازم يكون 10 أرقام ويبدأ بـ 1 أو 2", "The Iqama number must be 10 digits and start with 1 or 2", "ইকামা নম্বর 10 সংখ্যার হতে হবে এবং 1 বা 2 দিয়ে শুরু হতে হবে"],
+  e_iqNone: ["رقم الإقامة ده مش مسجل عندنا. اتأكد من الرقم أو كلم المشرف بتاعك.", "This Iqama number is not registered with us. Check the number or contact your supervisor.", "এই ইকামা নম্বরটি আমাদের কাছে নিবন্ধিত নেই। নম্বরটি যাচাই করুন বা আপনার সুপারভাইজারের সাথে যোগাযোগ করুন।"],
+  e_load: ["حصلت مشكلة في التحميل — جرّب تاني بعد شوية", "There was a loading problem — please try again later", "লোড করতে সমস্যা হয়েছে — একটু পরে আবার চেষ্টা করুন"],
+  e_amtNeed: ["اكتب المبلغ المطلوب.", "Enter the amount you need.", "প্রয়োজনীয় টাকার পরিমাণ লিখুন।"],
+  e_amtBig: ["المبلغ كبير جدًا.", "The amount is too large.", "পরিমাণটি অনেক বেশি।"],
+  e_reason: ["اختار سبب السلفة.", "Choose the reason for the advance.", "অগ্রিমের কারণ বেছে নিন।"],
+  e_ibFmt: ["اكتب الآيبان صح: لازم يبدأ بـ SA وبعده 22 رقم — انسخه من تطبيق البنك.", "Enter the IBAN correctly: it must start with SA followed by 22 digits — copy it from your bank app.", "IBAN সঠিকভাবে লিখুন: SA দিয়ে শুরু হয়ে পরে 22টি সংখ্যা থাকতে হবে — ব্যাংক অ্যাপ থেকে কপি করুন।"],
+  e_phone: ["اكتب رقم جوال صحيح (05xxxxxxxx).", "Enter a valid mobile number (05xxxxxxxx).", "সঠিক মোবাইল নম্বর লিখুন (05xxxxxxxx)।"],
+  e_agree: ["لازم توافق على خصم السلفة من الراتب وصحة بيانات الحساب.", "You must agree to the salary deduction and confirm your bank details.", "বেতন থেকে কর্তন এবং ব্যাংক তথ্য সঠিক হওয়ার বিষয়ে আপনাকে সম্মত হতে হবে।"],
+  e_cat: ["اختار نوع الشكوى.", "Choose the complaint type.", "অভিযোগের ধরন বেছে নিন।"],
+  e_cmpDet: ["اكتب الشكوى بالتفصيل.", "Describe the complaint in detail.", "অভিযোগটি বিস্তারিত লিখুন।"],
+  otherBank: ["بنك آخر", "Other bank", "অন্য ব্যাংক"]
+};
+const LANGS = ["ar", "en", "bn"];
+let LANG = (() => { try { const v = localStorage.getItem("tq_lang"); return LANGS.includes(v) ? v : "ar"; } catch (e) { return "ar"; } })();
+const T = (k, ...a) => { const e = L[k]; let s = e ? (e[LANGS.indexOf(LANG)] ?? e[0]) : k; a.forEach((v, i) => { s = String(s).replace("{" + i + "}", v); }); return s; };
+function applyLang() {
+  const h = document.documentElement; h.lang = LANG; h.dir = LANG === "ar" ? "rtl" : "ltr"; document.title = T("title");
+  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = T(el.dataset.t); });
+  document.querySelectorAll("[data-tp]").forEach(el => { el.placeholder = T(el.dataset.tp); });
+  document.querySelectorAll("[data-ta]").forEach(el => { el.setAttribute("aria-label", T(el.dataset.ta)); });
+  document.querySelectorAll(".langs button").forEach(b => b.setAttribute("aria-pressed", b.dataset.lang === LANG));
+}
 
 const $ = id => document.getElementById(id);
 const enc = new TextEncoder();
@@ -195,14 +313,16 @@ function show(v) {
 function err(id, m) { const e = $(id); e.textContent = m || ""; e.style.display = m ? "block" : "none"; }
 const accTxt = () => (ME.acc || []).map(a => a.p + " " + a.id).join(" + ");
 
-const MONTHS = ["يناير","فبراير","مارس","أبريل","مايو","يونيو","يوليو","أغسطس","سبتمبر","أكتوبر","نوفمبر","ديسمبر"];
-(() => {
-  $("bdD").innerHTML = '<option value="">اليوم</option>' + Array.from({ length: 31 }, (_, i) => `<option value="${String(i + 1).padStart(2, "0")}">${i + 1}</option>`).join("");
-  $("bdM").innerHTML = '<option value="">الشهر</option>' + MONTHS.map((m, i) => `<option value="${String(i + 1).padStart(2, "0")}">${i + 1} - ${m}</option>`).join("");
-  const y = new Date().getFullYear(); let o = '<option value="">السنة</option>'; for (let k = y - 16; k >= y - 75; k--) o += `<option>${k}</option>`; $("bdY").innerHTML = o;
-})();
+function buildBd() {
+  const keep = ["bdD", "bdM", "bdY"].map(x => $(x).value), M = T("months");
+  $("bdD").innerHTML = `<option value="">${T("day")}</option>` + Array.from({ length: 31 }, (_, i) => `<option value="${String(i + 1).padStart(2, "0")}">${i + 1}</option>`).join("");
+  $("bdM").innerHTML = `<option value="">${T("month")}</option>` + M.map((m, i) => `<option value="${String(i + 1).padStart(2, "0")}">${i + 1} - ${m}</option>`).join("");
+  const y = new Date().getFullYear(); let o = `<option value="">${T("year")}</option>`; for (let k = y - 16; k >= y - 75; k--) o += `<option>${k}</option>`; $("bdY").innerHTML = o;
+  ["bdD", "bdM", "bdY"].forEach((x, i) => { $(x).value = keep[i]; });
+}
+buildBd();
 let PEND = null; // {iq, blob, needBd}
-function resetLogin() { PEND = null; $("bdBox").classList.add("hidden"); $("iqHint").classList.remove("hidden"); $("goBtn").textContent = "التالي"; ["bdD", "bdM", "bdY"].forEach(x => $(x).value = ""); }
+function resetLogin() { PEND = null; $("bdBox").classList.add("hidden"); $("iqHint").classList.remove("hidden"); $("goBtn").textContent = T("next"); ["bdD", "bdM", "bdY"].forEach(x => $(x).value = ""); }
 async function openBlob(iq, blob, secret) {
   const rawb = Uint8Array.from(atob(blob), c => c.charCodeAt(0));
   const plain = await crypto.subtle.decrypt({ name: "AES-GCM", iv: rawb.slice(0, 12) }, await deriveKey(secret), rawb.slice(12));
@@ -211,11 +331,11 @@ async function openBlob(iq, blob, secret) {
 function enter(iq, obj, tok) {
   ME = obj; IQ = iq; TOK = tok;
   store.set("tq_s", JSON.stringify({ iq, tok, s: SECRET }));
-  $("whoName").textContent = ME.n || "مندوب";
+  $("whoName").textContent = ME.n || T("driver");
   const a = ME.acc && ME.acc[0];
-  $("whoMeta").innerHTML = [`الإقامة: <bdi dir="ltr">${iq}</bdi>`, ME.acc && ME.acc.length ? esc(ME.acc.map(x => x.p).join(" + ")) : "", a && a.s ? "المشرف: " + esc(a.s) : ""].filter(Boolean).join(" · ");
+  $("whoMeta").innerHTML = [`${T("iqShort")}: <bdi dir="ltr">${iq}</bdi>`, ME.acc && ME.acc.length ? esc(ME.acc.map(x => x.p).join(" + ")) : "", a && a.s ? T("supShort") + ": <bdi>" + esc(a.s) + "</bdi>" : ""].filter(Boolean).join(" · ");
   const ph = ME.ph ? "0" + String(ME.ph).replace(/^0+/, "") : ""; $("aPh").value = ph; $("cPh").value = ph;
-  $("heroSub").textContent = "أهلاً " + String(ME.n || "").split(" ")[0];
+  updateHero();
   resetLogin(); show("vHome");
 }
 let TOK = "", SECRET = "";
@@ -225,23 +345,23 @@ async function login(raw) {
   try {
     if (PEND && PEND.needBd) { // الخطوة التانية: تاريخ الميلاد
       const d = $("bdD").value, m = $("bdM").value, y = $("bdY").value;
-      if (!d || !m || !y) { err("err", "اختار اليوم والشهر والسنة."); return; }
-      b.disabled = true; b.innerHTML = '<span class="spin"></span> جاري التحقق...';
+      if (!d || !m || !y) { err("err", T("e_bdPick")); return; }
+      b.disabled = true; b.innerHTML = '<span class="spin"></span> ' + T("verifying");
       const secret = PEND.iq + "|" + y + "-" + m + "-" + d;
-      let obj; try { obj = await openBlob(PEND.iq, PEND.blob, secret); } catch (e) { err("err", "تاريخ الميلاد مش مطابق لبيانات الإقامة. اتأكد منه وجرّب تاني، ولو المشكلة مستمرة كلم المشرف بتاعك."); return; }
+      let obj; try { obj = await openBlob(PEND.iq, PEND.blob, secret); } catch (e) { err("err", T("e_bdWrong")); return; }
       SECRET = secret; enter(PEND.iq, obj, (await sha256hex("tok:" + secret)).slice(0, 32)); return;
     }
     const iq = toLatin(raw).replace(/\D/g, "");
-    if (!/^[12]\d{9}$/.test(iq)) { err("err", "رقم الإقامة لازم يكون 10 أرقام ويبدأ بـ 1 أو 2"); return; }
-    b.disabled = true; b.innerHTML = '<span class="spin"></span> جاري البحث...';
+    if (!/^[12]\d{9}$/.test(iq)) { err("err", T("e_iqFmt")); return; }
+    b.disabled = true; b.innerHTML = '<span class="spin"></span> ' + T("searching");
     const data = await loadData();
     const rec = data.d[(await sha256hex("req:" + iq)).slice(0, 24)];
-    if (!rec) { err("err", "رقم الإقامة ده مش مسجل عندنا. اتأكد من الرقم أو كلم المشرف بتاعك."); return; }
+    if (!rec) { err("err", T("e_iqNone")); return; }
     const needBd = rec.startsWith("b:"), blob = rec.slice(2);
     if (needBd) { PEND = { iq, blob, needBd }; $("iqHint").classList.add("hidden"); $("bdBox").classList.remove("hidden"); return; }
     SECRET = iq; enter(iq, await openBlob(iq, blob, iq), (await sha256hex("tok:" + iq)).slice(0, 32));
-  } catch (e) { err("err", "حصلت مشكلة في التحميل — جرّب تاني بعد شوية"); }
-  finally { b.disabled = false; b.textContent = PEND && PEND.needBd ? "دخول" : "التالي"; }
+  } catch (e) { err("err", T("e_load")); }
+  finally { b.disabled = false; b.textContent = PEND && PEND.needBd ? T("signIn") : T("next"); }
 }
 
 function payload(type) {
@@ -252,49 +372,50 @@ function payload(type) {
 const ADV_FROM = 10, ADV_TO = 13;
 const riyadhHour = () => { try { return Number(new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Riyadh", hour: "numeric", hourCycle: "h23" }).format(new Date())); } catch (e) { return (new Date().getUTCHours() + 3) % 24; } };
 const advOpen = () => { const h = riyadhHour(); return h >= ADV_FROM && h < ADV_TO; };
-const ADV_HOURS = "طلب السلفة متاح يوميًا من الساعة 10 الصبح لحد الساعة 1 الضهر بس.";
+
 function toast(t) { const el = document.createElement("div"); el.className = "toast"; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 3500); }
-function advState() { const b = document.querySelector('[data-go="adv"]'); if (!b) return; const o = advOpen(); b.classList.toggle("closed", !o); b.querySelector(".t2").textContent = o ? "متاح دلوقتي لحد الساعة 1 الضهر — اطلب مبلغ مقدم وبيتخصم من راتبك" : "🕐 " + ADV_HOURS; }
+function advState() { const b = document.querySelector('[data-go="adv"]'); if (!b) return; const o = advOpen(); b.classList.toggle("closed", !o); b.querySelector(".t2").textContent = o ? T("advOpenNow") : "🕐 " + T("advHours"); }
 setInterval(advState, 30000);
 // رد تلقائي بيظهر للمندوب لحد ما الإدارة ترد بنفسها
-const AUTO = { "سلفة": "طلبك تحت المراجعة وسيتم الرد عليك في أقرب وقت ✅", "شكوى": "تم استلام شكواك ✅ وسيتم مراجعتها والرد عليك في أقرب وقت. شكرًا لتواصلك معنا.", "آيبان": "تم استلام الآيبان ✅ وهيتم مراجعته." };
-const ERRS = { closed: ADV_HOURS + " جرّب تاني في الميعاد.", advday: "قدّمت طلب سلفة النهارده — مسموح بطلب سلفة واحد بس في اليوم. تقدر تقدّم طلب جديد بكره من الساعة 10 الصبح لـ 1 الضهر.", cmpday: "قدّمت شكوتين النهارده — الحد الأقصى شكوتين في اليوم. تقدر تقدّم شكوى جديدة بكره.", tok: "البيانات دي مش مطابقة لطلبات سابقة على نفس الإقامة. كلم المشرف بتاعك.", limit: "وصلت للحد الأقصى للطلبات النهارده (3 طلبات). جرّب بكره.", open: "عندك طلب سلفة لسه تحت المراجعة. استنى الرد عليه الأول.", amount: "اكتب مبلغ صحيح.", iban: "رقم الآيبان مش صحيح — راجعه من تطبيق البنك.", details: "اكتب تفاصيل الشكوى.", iq: "رقم الإقامة مش صحيح." };
+const AUTO_K = { "سلفة": "autoAdv", "شكوى": "autoCmp", "آيبان": "autoIb" };
+const AUTO = t => AUTO_K[t] ? T(AUTO_K[t]) : "";
+const ERR = k => k === "closed" ? T("advHours") + T("eTryHours") : L["e_" + k] ? T("e_" + k) : T("e_generic");
 
 async function send(p, btn, errId) {
   err(errId, "");
-  if (!API) { err(errId, "الخدمة لسه بتتجهز — جرّب تاني بعد شوية."); return; }
-  const label = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span> جاري الإرسال...';
+  if (!API) { err(errId, T("e_notReady")); return; }
+  const label = btn.textContent; btn.disabled = true; btn.innerHTML = '<span class="spin"></span> ' + T("sending");
   try {
     const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(p) });
     const j = await r.json();
-    if (!j.ok) { err(errId, ERRS[j.err] || "الطلب ماتبعتش — جرّب تاني."); return; }
-    $("dTitle").textContent = p.type === "سلفة" ? "تم إرسال طلب السلفة" : p.type === "آيبان" ? "تم إرسال الآيبان" : "تم إرسال الشكوى"; $("dSub").textContent = AUTO[p.type] || "احتفظ برقم الطلب علشان تتابعه من «طلباتي»";
+    if (!j.ok) { err(errId, ERR(j.err)); return; }
+    $("dTitle").textContent = T(p.type === "سلفة" ? "doneAdv" : p.type === "آيبان" ? "doneIb" : "doneCmp"); $("dSub").textContent = AUTO(p.type) || T("keepNo");
     $("dNo").classList.remove("hidden"); $("dNo").textContent = j.no;
     ["aAmt", "aDet", "cDet", "aIban"].forEach(id => $(id).value = ""); $("ibBank").textContent = ""; $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
     show("vDone");
   } catch (e) {
-    err(errId, "مفيش اتصال دلوقتي — اتأكد من النت وجرّب تاني.");
+    err(errId, T("e_net"));
   } finally { btn.disabled = false; btn.textContent = label; }
 }
 const phOk = v => /^0?5\d{8}$/.test(toLatin(v).replace(/\D/g, ""));
 
 $("aSend").onclick = () => {
   const amt = Math.round(Number(toLatin($("aAmt").value)));
-  if (!(amt > 0)) return err("aErr", "اكتب المبلغ المطلوب.");
-  if (amt > 20000) return err("aErr", "المبلغ كبير جدًا.");
-  if (!$("aReason").value) return err("aErr", "اختار سبب السلفة.");
+  if (!(amt > 0)) return err("aErr", T("e_amtNeed"));
+  if (amt > 20000) return err("aErr", T("e_amtBig"));
+  if (!$("aReason").value) return err("aErr", T("e_reason"));
   const ib = ibClean($("aIban").value);
-  if (!ibOk(ib)) return err("aErr", "اكتب الآيبان صح: لازم يبدأ بـ SA وبعده 22 رقم — انسخه من تطبيق البنك.");
+  if (!ibOk(ib)) return err("aErr", T("e_ibFmt"));
   const holder = ME.n || "";
-  if (!phOk($("aPh").value)) return err("aErr", "اكتب رقم جوال صحيح (05xxxxxxxx).");
-  if (!$("aOk").checked) return err("aErr", "لازم توافق على خصم السلفة من الراتب وصحة بيانات الحساب.");
+  if (!phOk($("aPh").value)) return err("aErr", T("e_phone"));
+  if (!$("aOk").checked) return err("aErr", T("e_agree"));
   const det = $("aDet").value.trim();
   send(Object.assign(payload("سلفة"), { amount: amt, reason: $("aReason").value, iban: ib, bank: ibBank(ib), holder, details: (det ? det + "\n" : "") + "الآيبان: " + ibFmt(ib) + " (" + ibBank(ib) + ") — باسم المندوب", phone: toLatin($("aPh").value).replace(/\D/g, "") }), $("aSend"), "aErr");
 };
 $("cSend").onclick = () => {
-  if (!$("cCat").value) return err("cErr", "اختار نوع الشكوى.");
-  if ($("cDet").value.trim().length < 5) return err("cErr", "اكتب الشكوى بالتفصيل.");
-  if (!phOk($("cPh").value)) return err("cErr", "اكتب رقم جوال صحيح (05xxxxxxxx).");
+  if (!$("cCat").value) return err("cErr", T("e_cat"));
+  if ($("cDet").value.trim().length < 5) return err("cErr", T("e_cmpDet"));
+  if (!phOk($("cPh").value)) return err("cErr", T("e_phone"));
   send(Object.assign(payload("شكوى"), { reason: $("cCat").value, details: $("cDet").value.trim(), phone: toLatin($("cPh").value).replace(/\D/g, "") }), $("cSend"), "cErr");
 };
 
@@ -309,31 +430,41 @@ function ibOk(v) {
 }
 const ibBank = v => { const x = ibClean(v); return /^SA\d{4}/.test(x) ? (BANKS[x.slice(4, 6)] || "بنك آخر") : ""; };
 const ibFmt = x => x.replace(/(.{4})/g, "$1 ").trim();
-$("aIban").addEventListener("input", () => { err("aErr", ""); const x = ibClean($("aIban").value); $("ibBank").textContent = x.length >= 6 ? (ibBank(x) + (x.length === 24 ? (ibOk(x) ? " ✔ الرقم صحيح" : " ✖ الرقم فيه غلط") : "")) : ""; });
+$("aIban").addEventListener("input", () => { err("aErr", ""); const x = ibClean($("aIban").value); $("ibBank").textContent = x.length >= 6 ? (ibBank(x) + (x.length === 24 ? (ibOk(x) ? T("ibGood") : T("ibBad")) : "")) : ""; });
 
 const ST = { "جديد": "s-new", "تحت المراجعة": "s-rev", "تمت الموافقة": "s-ok", "تم الحل": "s-ok", "مرفوض": "s-no" };
 async function loadList() {
   const box = $("lBox");
-  if (!API) { box.innerHTML = '<div class="card hint" style="text-align:center">متابعة الطلبات هتشتغل قريب.</div>'; return; }
-  box.innerHTML = '<div class="card hint" style="text-align:center">جاري التحميل...</div>';
+  if (!API) { box.innerHTML = `<div class="card hint" style="text-align:center">${T("listSoon")}</div>`; return; }
+  box.innerHTML = `<div class="card hint" style="text-align:center">${T("loading")}</div>`;
   try {
     const j = await (await fetch(API + "?action=status&iq=" + IQ + "&tok=" + TOK)).json();
     if (!j.ok) throw 0;
-    box.innerHTML = j.list.length ? j.list.map(r => `<div class="req"><div class="top"><div class="t1">${r.type === "سلفة" ? "💰 سلفة" + (r.amount ? " — " + Number(r.amount).toLocaleString("en-US") + " ريال" : "") : r.type === "آيبان" ? "🏦 آيبان — " + esc(r.reason) : "📝 شكوى — " + esc(r.reason)}</div><span class="pill ${ST[r.status] || "s-new"}">${esc(r.status)}</span></div>
-      <div class="t2">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>${r.by === "الشؤون القانونية" ? "⚖️ رد الشؤون القانونية" : "رد الإدارة"}:</b> ${esc(r.reply)}</div>` : (r.status === "جديد" || r.status === "تحت المراجعة") && AUTO[r.type] ? `<div class="rep auto"><b>🤖 رد تلقائي:</b> ${AUTO[r.type]}</div>` : ""}</div>`).join("")
-      : '<div class="card hint" style="text-align:center">لسه مقدمتش أي طلبات.</div>';
-  } catch (e) { box.innerHTML = '<div class="card hint" style="text-align:center">مقدرناش نجيب الطلبات دلوقتي — جرّب تاني بعد شوية.</div>'; }
+    box.innerHTML = j.list.length ? j.list.map(r => `<div class="req"><div class="top"><div class="t1">${r.type === "سلفة" ? T("tAdv") + (r.amount ? " — " + Number(r.amount).toLocaleString("en-US") + " " + T("sar") : "") : r.type === "آيبان" ? T("tIb") + " — " + esc(r.reason) : T("tCmp") + " — " + esc(T(r.reason))}</div><span class="pill ${ST[r.status] || "s-new"}">${esc(T(r.status))}</span></div>
+      <div class="t2">${T("reqNo")} <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>${T(r.by === "الشؤون القانونية" ? "replyLegal" : "replyAdmin")}:</b> ${esc(r.reply)}</div>` : (r.status === "جديد" || r.status === "تحت المراجعة") && AUTO(r.type) ? `<div class="rep auto"><b>${T("autoLbl")}:</b> ${AUTO(r.type)}</div>` : ""}</div>`).join("")
+      : `<div class="card hint" style="text-align:center">${T("noReqs")}</div>`;
+  } catch (e) { box.innerHTML = `<div class="card hint" style="text-align:center">${T("listFail")}</div>`; }
 }
 
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-go]"); if (!b) return;
   const g = b.dataset.go;
-  if (g === "home") show("vHome"); else if (g === "adv") { if (!advOpen()) { advState(); toast(ADV_HOURS); return; } err("aErr", ""); $("ibNow").textContent = ME.ib ? "الآيبان المسجل عندنا بينتهي بـ " + ME.ib + " — اكتبه كامل للتأكيد، أو اكتب الجديد لو اتغيّر." : "اكتب رقم الآيبان بتاعك علشان السلفة تتحول عليه."; show("vAdv"); } else if (g === "cmp") { err("cErr", ""); show("vCmp"); } else if (g === "list") { show("vList"); loadList(); }
+  if (g === "home") show("vHome"); else if (g === "adv") { if (!advOpen()) { advState(); toast(T("advHours")); return; } err("aErr", ""); ibNowTxt(); show("vAdv"); } else if (g === "cmp") { err("cErr", ""); show("vCmp"); } else if (g === "list") { show("vList"); loadList(); }
 });
 $("goBtn").onclick = () => login($("iqama").value);
 $("iqama").addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); });
-$("outBtn").onclick = () => { store.del("tq_s"); ME = null; IQ = ""; TOK = ""; SECRET = ""; $("iqama").value = ""; $("heroSub").textContent = "طلب سلفة أو تقديم شكوى"; resetLogin(); show("vLogin"); };
+$("outBtn").onclick = () => { store.del("tq_s"); ME = null; IQ = ""; TOK = ""; SECRET = ""; $("iqama").value = ""; resetLogin(); updateHero(); show("vLogin"); };
 $("iqama").addEventListener("input", () => { if (PEND) resetLogin(); });
+function updateHero() { $("heroSub").textContent = ME ? T("hello", String(ME.n || "").split(" ")[0]) : T("heroSub"); }
+function ibNowTxt() { $("ibNow").textContent = ME && ME.ib ? T("ibNowHas", ME.ib) : T("ibNowNone"); }
+function setLang(l) {
+  LANG = LANGS.includes(l) ? l : "ar"; try { localStorage.setItem("tq_lang", LANG); } catch (e) {}
+  applyLang(); buildBd(); advState(); updateHero(); if (ME) ibNowTxt();
+  if (!$("goBtn").disabled) $("goBtn").textContent = PEND && PEND.needBd ? T("signIn") : T("next");
+  if (!$("vList").classList.contains("hidden")) loadList();
+}
+document.querySelectorAll(".langs button").forEach(b => b.onclick = () => setLang(b.dataset.lang));
+setLang(LANG);
 (async () => { try { const s = JSON.parse(store.get("tq_s") || "null"); if (!s) return; const data = await loadData(); const rec = data.d[(await sha256hex("req:" + s.iq)).slice(0, 24)]; if (!rec) return;
   SECRET = s.s; enter(s.iq, await openBlob(s.iq, rec.slice(2), s.s), s.tok); } catch (e) { store.del("tq_s"); } })();
 </script>
