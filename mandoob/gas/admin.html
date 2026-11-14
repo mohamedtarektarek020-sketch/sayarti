@@ -194,18 +194,29 @@ $("goBtn").onclick = () => { PASS = $("pass").value; err(""); load(); };
 $("pass").addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); });
 $("refBtn").onclick = () => load();
 $("outBtn").onclick = () => { ss.del("tq_admin"); PASS = ""; LIST = []; ROLE = "admin"; $("ft").disabled = false; $("ft").value = ""; $("pass").value = ""; $("vMain").classList.add("hidden"); $("vLogin").classList.remove("hidden"); };
+/* أدوات الإكسيل: فصل الآيبان، تاريخ حقيقي، ترتيب من الأقدم للأحدث، فلتر */
+const ibOf = d => { const m = String(d || "").match(/الآيبان:\s*([A-Z0-9 ]+?)\s*\(([^)]*)\)/); return m ? [m[1].replace(/\s+/g, ""), m[2]] : ["", ""]; };
+const detOf = d => String(d || "").replace(/\n?الآيبان:[^\n]*/, "").trim();
+const xDate = s => { const m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})(?:\s+(\d{1,2}):(\d{2}))?/); return m ? { xd: (Date.UTC(+m[1], +m[2] - 1, +m[3], +(m[4] || 0), +(m[5] || 0)) - Date.UTC(1899, 11, 30)) / 864e5 } : (s || ""); };
+const oldFirst = L => L.slice().sort((a, b) => String(a.date).localeCompare(String(b.date)));
+function xSheet(H, rows, widths) {
+  const ws = XLSX.utils.aoa_to_sheet([H].concat(rows.map(row => row.map(v => v && v.xd != null ? v.xd : v)))); ws["!views"] = [{ RTL: true }];
+  const R = XLSX.utils.decode_range(ws["!ref"]);
+  rows.forEach((row, i) => row.forEach((v, c) => { if (v && v.xd != null) { const x = ws[XLSX.utils.encode_cell({ r: i + 1, c })]; x.t = "n"; x.z = "yyyy-mm-dd hh:mm"; } }));
+  H.forEach((h, c) => { if (/الآيبان|الإقامة|الجوال/.test(h)) for (let r = 1; r <= R.e.r; r++) { const x = ws[XLSX.utils.encode_cell({ r, c })]; if (x && x.v !== "") { x.t = "s"; x.v = String(x.v); } } });
+  if (widths) ws["!cols"] = widths.map(w => ({ wch: w }));
+  ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: Math.max(1, rows.length), c: H.length - 1 } }) };
+  return ws;
+}
 /* كل طلبات السلف في ملف واحد للمراجعة (مين مستحق ومين لا) */
 $("advXl").onclick = () => {
-  const adv = LIST.filter(r => r.type === "سلفة");
+  const adv = oldFirst(LIST.filter(r => r.type === "سلفة"));
   if (!adv.length) { alert("مافيش طلبات سلف لسه."); return; }
-  const ibOf = d => { const m = String(d || "").match(/الآيبان:\s*([A-Z0-9 ]+?)\s*\(([^)]*)\)/); return m ? [m[1].replace(/\s+/g, ""), m[2]] : ["", ""]; };
-  const H = ["رقم الطلب", "التاريخ", "الاسم", "الإقامة", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ (ريال)", "السبب", "الآيبان", "البنك", "التفاصيل", "الحالة", "الرد", "رد بواسطة", "تاريخ الرد", "مستحق؟ (نعم / لا)", "ملاحظات المراجعة"];
-  const rows = adv.map(r => { const [ib, bank] = ibOf(r.details); const det = String(r.details || "").replace(/\n?الآيبان:[^\n]*/, "").trim();
-    return [r.no, r.date, r.name, r.iq, r.acc, r.sup, r.city, r.phone, Number(r.amount) || 0, r.reason, ib, bank, det, r.status, r.reply, r.by || "", r.replied, "", ""]; });
+  const H = ["رقم الطلب", "التاريخ", "الاسم", "الإقامة", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ (ريال)", "السبب", "الآيبان", "البنك", "التفاصيل", "الترجمة للعربي", "الحالة", "الرد", "رد بواسطة", "تاريخ الرد", "مستحق؟ (نعم / لا)", "ملاحظات المراجعة"];
+  const rows = adv.map(r => { const [ib, bank] = ibOf(r.details);
+    return [r.no, xDate(r.date), r.name, r.iq, r.acc, r.sup, r.city, r.phone, Number(r.amount) || 0, r.reason, ib, bank, detOf(r.details), r.tr || "", r.status, r.reply, r.by || "", xDate(r.replied), "", ""]; });
   const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
-  const ws = XLSX.utils.aoa_to_sheet([H].concat(rows)); ws["!views"] = [{ RTL: true }];
-  ws["!cols"] = [14, 16, 30, 13, 26, 14, 12, 13, 12, 16, 28, 18, 34, 14, 30, 16, 16, 16, 30].map(w => ({ wch: w }));
-  ws["!autofilter"] = { ref: XLSX.utils.encode_range({ s: { r: 0, c: 0 }, e: { r: rows.length, c: H.length - 1 } }) };
+  const ws = xSheet(H, rows, [14, 17, 30, 13, 26, 14, 12, 13, 12, 16, 28, 18, 40, 40, 14, 30, 16, 17, 16, 30]);
   XLSX.utils.book_append_sheet(wb, ws, "كل السلف");
   const st = {}; adv.forEach(r => { const k = r.status || "جديد"; st[k] = st[k] || [0, 0]; st[k][0]++; st[k][1] += Number(r.amount) || 0; });
   const sum = [["الحالة", "عدد الطلبات", "إجمالي المبالغ (ريال)"]].concat(Object.entries(st).map(([k, v]) => [k, v[0], v[1]]), [["الإجمالي", adv.length, adv.reduce((a, r) => a + (Number(r.amount) || 0), 0)]]);
@@ -214,10 +225,12 @@ $("advXl").onclick = () => {
   XLSX.writeFile(wb, "كل السلف " + new Date().toISOString().slice(0, 10) + ".xlsx");
 };
 $("xlBtn").onclick = () => {
-  const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "التفاصيل", "الترجمة للعربي", "الحالة", "رد الإدارة"];
-  const aoa = [H].concat(filtered().map(r => [r.no, r.date, r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, r.amount || "", r.reason, r.details, r.tr || "", r.status, r.reply]));
-  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] }; const ws = XLSX.utils.aoa_to_sheet(aoa); ws["!views"] = [{ RTL: true }];
-  XLSX.utils.book_append_sheet(wb, ws, "الطلبات"); XLSX.writeFile(wb, "طلبات المناديب " + new Date().toISOString().slice(0, 10) + ".xlsx");
+  const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "الآيبان", "البنك", "التفاصيل", "الترجمة للعربي", "الحالة", "رد الإدارة", "رد بواسطة", "تاريخ الرد"];
+  const rows = oldFirst(filtered()).map(r => { const [ib, bank] = ibOf(r.details);
+    return [r.no, xDate(r.date), r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, Number(r.amount) || "", r.reason, ib, bank, detOf(r.details), r.tr || "", r.status, r.reply, r.by || "", xDate(r.replied)]; });
+  const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
+  XLSX.utils.book_append_sheet(wb, xSheet(H, rows, [14, 17, 9, 13, 30, 26, 14, 12, 13, 10, 18, 28, 18, 40, 40, 14, 30, 16, 17]), "الطلبات");
+  XLSX.writeFile(wb, "طلبات المناديب " + new Date().toISOString().slice(0, 10) + ".xlsx");
 };
 (() => { const p = ss.get("tq_admin"); if (p) { PASS = p; load(true); } })();
 </script>
