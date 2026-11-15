@@ -9,6 +9,8 @@ for (const r of S.h) add(r[1], { n: r[3].replace(/\s+/g, ' ').trim(), c: r[5], a
 (async () => {
   const d = {}; const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
   const SPON = new Set(Object.values(R).filter(r => !r.left).map(r => String(r.iq)));   // على الكفالة بس
+  // اللي نزل نهائي ورجع بإقامة جديدة (مثلاً على مسار الصفوة برو): الإقامة الجديدة والقديمة الاتنين مسموحين
+  const LINKS = (j.base && j.base.links) || j.links || {}; for (const [nw, x] of Object.entries(LINKS)) if (x && x.old) { SPON.add(nw); SPON.add(String(x.old)); }
   for (const iq in P) {
     if (!SPON.has(iq)) { d[hex(await C.subtle.digest('SHA-256', enc.encode('req:' + iq))).slice(0, 24)] = 'x:'; continue; }   // مش على الكفالة: النظام مقفول
     const id = hex(await C.subtle.digest('SHA-256', enc.encode('req:' + iq))).slice(0, 24);
