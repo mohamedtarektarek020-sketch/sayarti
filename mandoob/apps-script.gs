@@ -23,6 +23,7 @@ const VIEW_PASS = '';   // كلمة سر للإدارة: يشوفوا الطلب
 const LEGAL_PASS = '';   // كلمة سر الشؤون القانونية: بيشوفوا الشكاوى بس ويردّوا عليها (8 حروف أو أكتر)
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
 const MAX_PER_DAY = 3;
+const ADV_GAP_DAYS = 7;   // بعد الموافقة على سلفة، المندوب يقدر يطلب سلفة جديدة بعد 7 أيام
 const ADV_FROM = 10, ADV_TO = 13;   // طلبات السلف متاحة يوميًا من 10 الصبح لـ 1 الضهر بتوقيت السعودية
 const advOpen_ = () => { const h = Number(Utilities.formatDate(new Date(), 'Asia/Riyadh', 'H')); return h >= ADV_FROM && h < ADV_TO; };        // أقصى عدد طلبات للمندوب في اليوم
 
@@ -87,6 +88,12 @@ function doPost(e) {
     if (type === 'سلفة' && todayOf('سلفة') >= 1) return json_({ ok: false, err: 'advday' });
     if (type === 'شكوى' && todayOf('شكوى') >= 2) return json_({ ok: false, err: 'cmpday' });
     if (type === 'سلفة' && mine.some(r => r[2] === 'سلفة' && (r[12] === 'جديد' || r[12] === 'تحت المراجعة'))) return json_({ ok: false, err: 'open' });
+    // بعد الموافقة على سلفة: مفيش سلفة جديدة غير بعد أسبوع من تاريخ الموافقة
+    if (type === 'سلفة') {
+      const appr = mine.filter(r => r[2] === 'سلفة' && r[12] === 'تمت الموافقة').map(r => new Date(r[14] || r[1]).getTime()).filter(t => t > 0);
+      if (appr.length) { const until = new Date(Math.max.apply(null, appr) + ADV_GAP_DAYS * 864e5);
+        if (until > new Date()) return json_({ ok: false, err: 'advweek', until: Utilities.formatDate(until, 'Asia/Riyadh', 'yyyy-MM-dd') }); }
+    }
     const no = (type === 'سلفة' ? 'S' : type === 'آيبان' ? 'B' : 'C') + Utilities.formatDate(new Date(), 'Asia/Riyadh', 'yyMMdd') + '-' + String(rows.length + 1).padStart(4, '0');
     const row = [no, new Date(), type, "'" + iq, clean_(b.name, 120), clean_(b.acc, 200), clean_(b.sup, 80), clean_(b.city, 60), "'" + clean_(b.phone, 15),
       amount, clean_(b.reason, 80), details, 'جديد', '', '', tok, '', tr_(details)];
