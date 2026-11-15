@@ -255,6 +255,7 @@ const L = {
   listSoon: ["متابعة الطلبات هتشتغل قريب.", "Request tracking will be available soon.", "আবেদন দেখার সুবিধা শীঘ্রই চালু হবে।"],
   listFail: ["مقدرناش نجيب الطلبات دلوقتي — جرّب تاني بعد شوية.", "We could not load your requests right now — please try again later.", "এখন আপনার আবেদনগুলো লোড করা যায়নি — একটু পরে আবার চেষ্টা করুন।"],
   eTryHours: [" جرّب تاني في الميعاد.", " Please try again during these hours.", " অনুগ্রহ করে এই সময়ের মধ্যে আবার চেষ্টা করুন।"],
+  e_advrej: ["طلب السلفة الأخير اترفض — تقدر تقدّم طلب سلفة جديد بعد 3 أيام من الرفض، يعني من يوم {0}.", "Your last advance request was rejected — you can request a new advance 3 days after the rejection, from {0}.", "আপনার শেষ অগ্রিমের আবেদন বাতিল হয়েছে — বাতিলের ৩ দিন পরে নতুন আবেদন করা যাবে, অর্থাৎ {0} থেকে।"],
   e_advweek: ["تمت الموافقة على سلفتك الأخيرة ✅ — مسموح بطلب سلفة جديدة بعد أسبوع من الموافقة. تقدر تقدّم طلب جديد من يوم {0}.", "Your last advance was approved ✅ — a new advance can be requested one week after approval. You can apply again from {0}.", "আপনার শেষ অগ্রিম অনুমোদিত হয়েছে ✅ — অনুমোদনের এক সপ্তাহ পরে নতুন অগ্রিম চাওয়া যাবে। আপনি {0} থেকে আবার আবেদন করতে পারবেন।"],
   e_advday: ["قدّمت طلب سلفة النهارده — مسموح بطلب سلفة واحد بس في اليوم. تقدر تقدّم طلب جديد بكره من الساعة 10 الصبح لـ 1 الضهر.", "You already sent an advance request today — only one advance request is allowed per day. You can send a new one tomorrow from 10 AM to 1 PM.", "আপনি আজ ইতিমধ্যে অগ্রিমের আবেদন করেছেন — দিনে শুধু একটি আবেদন করা যায়। আগামীকাল সকাল 10টা থেকে দুপুর 1টার মধ্যে নতুন আবেদন করতে পারবেন।"],
   e_cmpday: ["قدّمت شكوتين النهارده — الحد الأقصى شكوتين في اليوم. تقدر تقدّم شكوى جديدة بكره.", "You already sent two complaints today — the maximum is two per day. You can send a new complaint tomorrow.", "আপনি আজ ইতিমধ্যে দুটি অভিযোগ করেছেন — দিনে সর্বোচ্চ দুটি। আগামীকাল নতুন অভিযোগ করতে পারবেন।"],
@@ -384,7 +385,7 @@ setInterval(advState, 30000);
 // رد تلقائي بيظهر للمندوب لحد ما الإدارة ترد بنفسها
 const AUTO_K = { "سلفة": "autoAdv", "شكوى": "autoCmp", "آيبان": "autoIb" };
 const AUTO = t => AUTO_K[t] ? T(AUTO_K[t]) : "";
-const ERR = (k, j) => k === "closed" ? T("advHours") + T("eTryHours") : k === "advweek" ? T("e_advweek", fmtDay(j && j.until)) : L["e_" + k] ? T("e_" + k) : T("e_generic");
+const ERR = (k, j) => k === "closed" ? T("advHours") + T("eTryHours") : k === "advweek" || k === "advrej" ? T("e_" + k, fmtDay(j && j.until)) : L["e_" + k] ? T("e_" + k) : T("e_generic");
 const fmtDay = s => { const m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + "/" + m[2] + "/" + m[1] : (s || ""); };
 
 async function send(p, btn, errId) {
