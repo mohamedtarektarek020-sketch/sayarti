@@ -30,8 +30,8 @@ const BLOCKED_SP = '001844370631,00a8cc727bad,02e3fc914912,07c83fe877f7,095b1873
 const notSp_ = iq => BLOCKED_SP.indexOf(Utilities.computeDigest(Utilities.DigestAlgorithm.SHA_256, 'sp:' + iq, Utilities.Charset.UTF_8).map(b => ('0' + (b & 255).toString(16)).slice(-2)).join('').slice(0, 12)) >= 0;
 const ADV_GAP_DAYS = 7;   // بعد الموافقة على سلفة، المندوب يقدر يطلب سلفة جديدة بعد 7 أيام
 const ADV_REJ_DAYS = 3;   // بعد رفض سلفة، المندوب يقدر يطلب سلفة جديدة بعد 3 أيام
-const ADV_WINS = [[10, 13]];   // طلبات السلف متاحة يوميًا من 10 الصبح لـ 1 الضهر بتوقيت السعودية
-const ADV_NIGHT = [20, 22], ADV_NIGHT_FROM = '2026-11-21';   // ومن يوم السبت 21/11/2026 كمان من 8 بالليل لـ 10 بالليل (للمناديب اللي بيشتغلوا بالليل)
+const ADV_WINS = [[10, 15]];   // طلبات السلف متاحة يوميًا من 10 الصبح لـ 3 العصر بتوقيت السعودية
+const ADV_NIGHT = [20, 24], ADV_NIGHT_FROM = '2026-11-21';   // وكمان من 8 بالليل لـ 12 بالليل (للمناديب اللي بيشتغلوا بالليل)
 const advOpen_ = () => { const now = new Date(), h = Number(Utilities.formatDate(now, 'Asia/Riyadh', 'H')), d = Utilities.formatDate(now, 'Asia/Riyadh', 'yyyy-MM-dd');
   const wins = d >= ADV_NIGHT_FROM ? ADV_WINS.concat([ADV_NIGHT]) : ADV_WINS; return wins.some(w => h >= w[0] && h < w[1]); };        // أقصى عدد طلبات للمندوب في اليوم
 
