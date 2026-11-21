@@ -139,7 +139,7 @@ const ss = { get: k => { try { return sessionStorage.getItem(k); } catch (e) { r
 let PASS = "", LIST = [];
 function toast(t) { const d = document.createElement("div"); d.className = "toast"; d.textContent = t; document.body.appendChild(d); setTimeout(() => d.remove(), 2800); }
 function err(m) { const e = $("err"); e.textContent = m || ""; e.style.display = m ? "block" : "none"; }
-let ROLE = "admin";
+let ROLE = "admin", WHO = "";
 async function call(body) {
   const r = await fetch(API, { method: "POST", headers: { "Content-Type": "text/plain;charset=utf-8" }, body: JSON.stringify(Object.assign({ pass: PASS }, body)) });
   return r.json();
@@ -150,12 +150,12 @@ async function load(silent) {
   try {
     const j = await call({ action: "admin_list" });
     if (!j.ok) { err(j.err === "pass" ? "كلمة السر غلط (ولو غلطت كتير بيقفل 10 دقايق)." : "حصلت مشكلة — جرّب تاني."); ss.del("tq_admin"); return false; }
-    LIST = j.list; ROLE = j.role || "admin"; ss.set("tq_admin", PASS);
+    LIST = j.list; ROLE = j.role || "admin"; WHO = j.who || ""; ss.set("tq_admin", PASS);
     if (ROLE === "legal") { $("ft").value = "شكوى"; $("ft").disabled = true; }
     if (ROLE === "sup") { $("ft").value = "سلفة"; $("ft").disabled = true; }
     $("advXl").classList.toggle("hidden", ROLE === "legal");
     $("vLogin").classList.add("hidden"); $("vMain").classList.remove("hidden");
-    $("upd").textContent = (ROLE === "view" ? "👁️ عرض فقط · " : ROLE === "legal" ? "⚖️ الشؤون القانونية — الشكاوى بس · " : ROLE === "sup" ? "👀 المشرفين — السلف وقرار الإدارة (عرض فقط) · " : "") + "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
+    $("upd").textContent = (ROLE === "view" ? "👁️ عرض فقط · " : ROLE === "legal" ? "⚖️ الشؤون القانونية" + (WHO ? " (" + WHO + ")" : "") + " — الشكاوى بس · " : ROLE === "sup" ? "👀 المشرفين — السلف وقرار الإدارة (عرض فقط) · " : "") + "آخر تحديث: " + new Date().toLocaleTimeString("ar-EG", { hour: "2-digit", minute: "2-digit" });
     const sups = [...new Set(LIST.map(r => r.sup).filter(Boolean))].sort();
     const cur = $("fp").value; $("fp").innerHTML = '<option value="">كل المشرفين</option>' + sups.map(s => `<option ${s === cur ? "selected" : ""}>${esc(s)}</option>`).join("");
     render(); return true;
@@ -179,6 +179,7 @@ function render() {
     ${r.details ? `<div class="det">${esc(r.details)}</div>` : ""}${r.tr ? `<div class="det tr"><b>🌐 الترجمة للعربي:</b> ${esc(r.tr)}</div>` : ""}
     <div class="mt">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi>${r.replied ? ` · آخر رد <bdi dir="ltr">${esc(r.replied)}</bdi>` : ""}</div>
     ${r.by ? `<div class="mt">آخر رد بواسطة: <b>${esc(r.by)}</b></div>` : ""}
+    ${r.log ? `<details class="mt"><summary>📜 سجل الردود (${String(r.log).split("\n").length})</summary><div class="det" style="white-space:pre-wrap">${esc(r.log)}</div></details>` : ""}
     ${ROLE === "view" || ROLE === "sup" ? (r.reply ? `<div class="det"><b>رد ${esc(r.by || "الإدارة")}:</b> ${esc(r.reply)}</div>` : "") : `<div class="act"><select aria-label="الحالة">${STATUSES.map(s => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select>
       <textarea aria-label="رد الإدارة" placeholder="الرد اللي هيظهر للمندوب">${esc(r.reply)}</textarea><button type="button">حفظ</button></div>`}</div>`).join("")
     : '<div class="card hint" style="text-align:center;grid-column:1/-1">مافيش طلبات بالفلتر ده.</div>';
@@ -226,11 +227,11 @@ $("advXl").onclick = () => {
   XLSX.writeFile(wb, "كل السلف " + new Date().toISOString().slice(0, 10) + ".xlsx");
 };
 $("xlBtn").onclick = () => {
-  const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "الآيبان", "البنك", "التفاصيل", "الترجمة للعربي", "الحالة", "رد الإدارة", "رد بواسطة", "تاريخ الرد"];
+  const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "الآيبان", "البنك", "التفاصيل", "الترجمة للعربي", "الحالة", "رد الإدارة", "رد بواسطة", "تاريخ الرد", "سجل الردود"];
   const rows = oldFirst(filtered()).map(r => { const [ib, bank] = ibOf(r.details);
-    return [r.no, xDate(r.date), r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, Number(r.amount) || "", r.reason, ib, bank, detOf(r.details), r.tr || "", r.status, r.reply, r.by || "", xDate(r.replied)]; });
+    return [r.no, xDate(r.date), r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, Number(r.amount) || "", r.reason, ib, bank, detOf(r.details), r.tr || "", r.status, r.reply, r.by || "", xDate(r.replied), r.log || ""]; });
   const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
-  XLSX.utils.book_append_sheet(wb, xSheet(H, rows, [14, 17, 9, 13, 30, 26, 14, 12, 13, 10, 18, 28, 18, 40, 40, 14, 30, 16, 17]), "الطلبات");
+  XLSX.utils.book_append_sheet(wb, xSheet(H, rows, [14, 17, 9, 13, 30, 26, 14, 12, 13, 10, 18, 28, 18, 40, 40, 14, 30, 16, 17, 60]), "الطلبات");
   XLSX.writeFile(wb, "طلبات المناديب " + new Date().toISOString().slice(0, 10) + ".xlsx");
 };
 (() => { const p = ss.get("tq_admin"); if (p) { PASS = p; load(true); } })();
