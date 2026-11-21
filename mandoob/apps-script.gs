@@ -21,6 +21,7 @@ const STATUSES = ['جديد', 'تحت المراجعة', 'تمت الموافق�
 const ADMIN_PASS = 'غيّر-الكلمة-دي';   // ⚠️ اكتب هنا كلمة سر صفحة الإدارة (8 حروف أو أكتر)
 const VIEW_PASS = '';   // كلمة سر للإدارة: يشوفوا الطلبات بس من غير ما يغيروا حاجة (تقدر تغيرها، 8 حروف أو أكتر)
 const LEGAL_PASS = '';   // كلمة سر الشؤون القانونية: بيشوفوا الشكاوى بس ويردّوا عليها (8 حروف أو أكتر)
+const SUP_PASS = '';     // كلمة سر المشرفين: بيشوفوا طلبات السلف وقرار الإدارة فيها بس (عرض فقط، من غير الآيبان) — 8 حروف أو أكتر
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
 const MAX_PER_DAY = 3;
 // المناديب اللي مش على كفالة الشركة: النظام مقفول عليهم (بصمة رقم الإقامة)
@@ -139,6 +140,7 @@ function adminOk_(pass) {
   if (ADMIN_PASS.length >= 8 && ADMIN_PASS !== 'غيّر-الكلمة-دي' && String(pass) === ADMIN_PASS) return 'admin';
   if (VIEW_PASS.length >= 8 && String(pass) === VIEW_PASS) return 'view';
   if (LEGAL_PASS.length >= 8 && String(pass) === LEGAL_PASS) return 'legal';
+  if (SUP_PASS.length >= 8 && String(pass) === SUP_PASS) return 'sup';
   c.put(k, String(fails + 1), 600); return false;
 }
 function adminList_(role) {
@@ -149,8 +151,8 @@ function adminList_(role) {
   if (!sh.getRange(1, 18).getValue()) sh.getRange(1, 18).setValue('الترجمة للعربي');
   let n = 0;   // ترجمة الطلبات القديمة اللي لسه ماتترجمتش (20 في كل مرة)
   rows.forEach((r, i) => { if (n < 20 && r[0] && r[11] && r[17] === '') { const t = tr_(r[11]); r[17] = t || '-'; sh.getRange(i + 2, 18).setValue(r[17]); n++; } });
-  return { ok: true, list: rows.filter(r => r[0] && (role !== 'legal' || r[2] === 'شكوى')).map(r => ({ no: r[0], date: f(r[1]), type: r[2], iq: String(r[3]), name: r[4], acc: r[5], sup: r[6], city: r[7], phone: String(r[8]),
-    amount: r[9], reason: r[10], details: r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]), by: r[16] || '', tr: r[17] && r[17] !== '-' ? r[17] : '' })).reverse() };
+  return { ok: true, list: rows.filter(r => r[0] && (role !== 'legal' || r[2] === 'شكوى') && (role !== 'sup' || r[2] === 'سلفة')).map(r => ({ no: r[0], date: f(r[1]), type: r[2], iq: String(r[3]), name: r[4], acc: r[5], sup: r[6], city: r[7], phone: String(r[8]),
+    amount: r[9], reason: r[10], details: role === 'sup' ? String(r[11] || '').replace(/\n?الآيبان:[^\n]*/g, '').trim() : r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]), by: r[16] || '', tr: r[17] && r[17] !== '-' ? r[17] : '' })).reverse() };
 }
 function adminUpdate_(b, role) {
   if (STATUSES.indexOf(b.status) < 0) return { ok: false, err: 'status' };
