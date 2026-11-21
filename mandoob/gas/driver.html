@@ -100,11 +100,11 @@ bdi{unicode-bidi:isolate}
   <section id="vLogin" class="card lift">
     <label for="iqama" data-t="iqLabel">رقم الإقامة</label>
     <input id="iqama" inputmode="numeric" autocomplete="off" maxlength="14" placeholder="2xxxxxxxxx">
-    <div class="hint" id="iqHint" data-t="iqHint">اكتب رقم الإقامة بتاعك (10 أرقام) علشان تدخل.</div>
+    <div class="hint" id="iqHint" data-t="iqHint">أدخل رقم إقامتك (10 أرقام) لتسجيل الدخول.</div>
     <div id="bdBox" class="hidden">
-      <label data-t="bdLabel">تاريخ الميلاد (زي ما هو في الإقامة)</label>
+      <label data-t="bdLabel">تاريخ الميلاد (كما هو في الإقامة)</label>
       <div class="bd"><select id="bdD" aria-label="اليوم" data-ta="day"></select><select id="bdM" aria-label="الشهر" data-ta="month"></select><select id="bdY" aria-label="السنة" data-ta="year"></select></div>
-      <div class="hint" data-t="bdHint">للتأكد إنك صاحب الإقامة.</div>
+      <div class="hint" data-t="bdHint">للتحقق من أنك صاحب الإقامة.</div>
     </div>
     <button class="main" id="goBtn" type="button">التالي</button>
     <div class="err" id="err"></div>
@@ -114,9 +114,9 @@ bdi{unicode-bidi:isolate}
   <section id="vHome" class="hidden">
     <div class="card lift"><div class="who"><div><div class="nm" id="whoName"></div><div class="meta" id="whoMeta"></div></div><button class="ghost" id="outBtn" type="button" data-t="logout">خروج</button></div></div>
     <div class="choices">
-      <button class="choice" type="button" data-go="adv"><span class="ic m">💰</span><span><div class="t1" data-t="advT1">طلب سلفة</div><div class="t2">اطلب مبلغ مقدم وبيتخصم من راتبك</div></span></button>
-      <button class="choice" type="button" data-go="cmp"><span class="ic c">📝</span><span><div class="t1" data-t="cmpT1">تقديم شكوى</div><div class="t2" data-t="cmpT2">راتب، خصم، بنزين، سيارة، مشرف أو أي مشكلة</div></span></button>
-      <button class="choice" type="button" data-go="list"><span class="ic l">📋</span><span><div class="t1" data-t="listT1">طلباتي</div><div class="t2" data-t="listT2">تابع حالة الطلبات اللي قدمتها</div></span></button>
+      <button class="choice" type="button" data-go="adv"><span class="ic m">💰</span><span><div class="t1" data-t="advT1">طلب سلفة</div><div class="t2">اطلب مبلغًا مقدمًا يُخصم من راتبك</div></span></button>
+      <button class="choice" type="button" data-go="cmp"><span class="ic c">📝</span><span><div class="t1" data-t="cmpT1">تقديم شكوى</div><div class="t2" data-t="cmpT2">الراتب، الخصومات، البنزين، السيارة، المشرف، أو أي مشكلة أخرى</div></span></button>
+      <button class="choice" type="button" data-go="list"><span class="ic l">📋</span><span><div class="t1" data-t="listT1">طلباتي</div><div class="t2" data-t="listT2">تابع حالة الطلبات التي قدمتها</div></span></button>
     </div>
   </section>
 
@@ -124,19 +124,19 @@ bdi{unicode-bidi:isolate}
   <section id="vAdv" class="hidden">
     <button class="back" type="button" data-go="home" data-t="back">→ رجوع</button>
     <div class="card"><h2 data-t="advH">💰 طلب سلفة</h2>
-      <label for="aAmt" data-t="amt">المبلغ المطلوب (ريال)</label><input id="aAmt" type="number" inputmode="numeric" min="1" max="20000" placeholder="مثلاً 500" data-tp="amtPh">
+      <label for="aAmt" data-t="amt">المبلغ المطلوب (ريال)</label><input id="aAmt" type="number" inputmode="numeric" min="1" max="20000" placeholder="مثال: 500" data-tp="amtPh">
       <label for="aReason" data-t="reason">سبب السلفة</label>
-      <select id="aReason"><option value="" data-t="chooseReason">اختار السبب</option><option value="ظروف عائلية" data-t="ظروف عائلية">ظروف عائلية</option><option value="علاج" data-t="علاج">علاج</option><option value="إيجار سكن" data-t="إيجار سكن">إيجار سكن</option><option value="سفر / إجازة" data-t="سفر / إجازة">سفر / إجازة</option><option value="مصاريف السيارة" data-t="مصاريف السيارة">مصاريف السيارة</option><option value="أخرى" data-t="أخرى">أخرى</option></select>
-      <label for="aDet" data-t="det">تفاصيل (اختياري)</label><textarea id="aDet" maxlength="1500" placeholder="اكتب أي تفاصيل تساعد في الموافقة" data-tp="detPh"></textarea>
+      <select id="aReason"><option value="" data-t="chooseReason">اختر السبب</option><option value="ظروف عائلية" data-t="ظروف عائلية">ظروف عائلية</option><option value="علاج" data-t="علاج">علاج</option><option value="إيجار سكن" data-t="إيجار سكن">إيجار سكن</option><option value="سفر / إجازة" data-t="سفر / إجازة">سفر / إجازة</option><option value="مصاريف السيارة" data-t="مصاريف السيارة">مصاريف السيارة</option><option value="أخرى" data-t="أخرى">أخرى</option></select>
+      <label for="aDet" data-t="det">التفاصيل (اختياري)</label><textarea id="aDet" maxlength="1500" placeholder="اكتب أي تفاصيل تساعد في الموافقة على الطلب" data-tp="detPh"></textarea>
       <div class="ibbox">
-        <label for="aIban" data-t="ibLabel">🏦 الآيبان اللي هتنزل عليه السلفة</label>
+        <label for="aIban" data-t="ibLabel">🏦 رقم الآيبان الذي ستُحوَّل عليه السلفة</label>
         <div class="hint" id="ibNow"></div>
         <input id="aIban" dir="ltr" autocomplete="off" autocapitalize="characters" maxlength="34" placeholder="SA00 0000 0000 0000 0000 0000" style="text-align:left;letter-spacing:.5px">
         <div class="hint" id="ibBank"></div>
-        <div class="hint" data-t="ibMine">لازم يكون الآيبان باسمك إنت.</div>
+        <div class="hint" data-t="ibMine">يجب أن يكون الآيبان باسمك.</div>
       </div>
       <label for="aPh" data-t="phone">رقم الجوال</label><input id="aPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
-      <label class="chk"><input type="checkbox" id="aOk"> <span data-t="agree">أوافق إن مبلغ السلفة يتخصم من راتبي حسب نظام الشركة، وإن بيانات الحساب البنكي صحيحة.</span></label>
+      <label class="chk"><input type="checkbox" id="aOk"> <span data-t="agree">أوافق على خصم مبلغ السلفة من راتبي وفق نظام الشركة، وأقر بصحة بيانات الحساب البنكي.</span></label>
       <button class="main" id="aSend" type="button" data-t="advSend">إرسال طلب السلفة</button>
       <div class="err" id="aErr"></div>
     </div>
@@ -146,10 +146,10 @@ bdi{unicode-bidi:isolate}
   <section id="vCmp" class="hidden">
     <button class="back" type="button" data-go="home" data-t="back">→ رجوع</button>
     <div class="card"><h2 data-t="cmpH">📝 تقديم شكوى</h2>
-      <div class="note" data-t="cmpDays">🗓️ الرد على الشكاوى بيكون من يوم الأحد إلى يوم الخميس من كل أسبوع.</div>
+      <div class="note" data-t="cmpDays">🗓️ يتم الرد على الشكاوى من يوم الأحد إلى يوم الخميس من كل أسبوع.</div>
       <label for="cCat" data-t="cCat">نوع الشكوى</label>
-      <select id="cCat"><option value="" data-t="chooseType">اختار النوع</option><option value="الراتب" data-t="الراتب">الراتب</option><option value="خصم أو مديونية" data-t="خصم أو مديونية">خصم أو مديونية</option><option value="البنزين / الشريحة" data-t="البنزين / الشريحة">البنزين / الشريحة</option><option value="السيارة" data-t="السيارة">السيارة</option><option value="المشرف" data-t="المشرف">المشرف</option><option value="التطبيق / الحساب" data-t="التطبيق / الحساب">التطبيق / الحساب</option><option value="أخرى" data-t="أخرى">أخرى</option></select>
-      <label for="cDet" data-t="cDet">اكتب الشكوى بالتفصيل</label><textarea id="cDet" maxlength="1500" placeholder="إيه المشكلة؟ وإمتى حصلت؟" data-tp="cDetPh"></textarea>
+      <select id="cCat"><option value="" data-t="chooseType">اختر النوع</option><option value="الراتب" data-t="الراتب">الراتب</option><option value="خصم أو مديونية" data-t="خصم أو مديونية">خصم أو مديونية</option><option value="البنزين / الشريحة" data-t="البنزين / الشريحة">البنزين / الشريحة</option><option value="السيارة" data-t="السيارة">السيارة</option><option value="المشرف" data-t="المشرف">المشرف</option><option value="التطبيق / الحساب" data-t="التطبيق / الحساب">التطبيق / الحساب</option><option value="أخرى" data-t="أخرى">أخرى</option></select>
+      <label for="cDet" data-t="cDet">اكتب تفاصيل الشكوى</label><textarea id="cDet" maxlength="1500" placeholder="ما المشكلة؟ ومتى حدثت؟" data-tp="cDetPh"></textarea>
       <label for="cPh" data-t="phone">رقم الجوال</label><input id="cPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
       <button class="main" id="cSend" type="button" data-t="cSend">إرسال الشكوى</button>
       <div class="err" id="cErr"></div>
@@ -158,7 +158,7 @@ bdi{unicode-bidi:isolate}
 
   <!-- تم -->
   <section id="vDone" class="hidden">
-    <div class="card lift done"><div class="big">✅</div><h2 id="dTitle">تم إرسال طلبك</h2><div class="hint" id="dSub">احتفظ برقم الطلب علشان تتابعه</div><div class="no" id="dNo"></div>
+    <div class="card lift done"><div class="big">✅</div><h2 id="dTitle">تم إرسال طلبك</h2><div class="hint" id="dSub">احتفظ برقم الطلب لمتابعته</div><div class="no" id="dNo"></div>
             <button class="main" type="button" data-go="list" data-t="listT1">طلباتي</button><button class="ghost" style="width:100%;margin-top:10px;padding:12px" type="button" data-go="home" data-t="goHome">الرجوع للرئيسية</button></div>
   </section>
 
