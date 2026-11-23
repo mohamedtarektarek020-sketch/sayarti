@@ -52,10 +52,9 @@ def accounts(month):
         if lk: x['level'] = lk[-1]['klv']
         lw = [d for d in ds if d.get('wal') is not None]
         if lw: x['wallet'] = lw[-1]['wal']
-        km = x.get('dist')
-        if km is None:
-            tk = [d for d in ds if d.get('tkm') is not None]
-            if tk: km = tk[-1]['tkm']
+        # المسافات = إجمالي كيلومترات الشهر من آخر يوم (Total KM)، ولو مش موجود: شيت الأداء
+        tk = [d for d in ds if d.get('tkm') is not None]
+        km = tk[-1]['tkm'] if tk else x.get('dist')
         x['km'] = km
         x['dayList'] = [d['d'] for d in ds if d['o'] > 0]
         x['hours'] = round(sum(d['hr'] or 0 for d in ds))
