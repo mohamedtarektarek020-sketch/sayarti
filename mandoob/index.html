@@ -53,6 +53,11 @@ button{font:inherit;cursor:pointer}
 .ghost{background:transparent;border:1.5px solid var(--line);color:var(--muted);border-radius:12px;padding:8px 12px;font-size:13.5px;font-weight:700;white-space:nowrap}
 .err{display:none;margin-top:12px;padding:11px 12px;border-radius:12px;background:var(--bad-bg);color:var(--bad);font-weight:700;font-size:14px;text-align:center;line-height:1.6}
 .hidden{display:none!important}
+.attBtn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:4px;padding:12px;border:1.5px dashed var(--line);border-radius:14px;background:var(--bg);color:var(--ink);font:inherit;font-weight:700;font-size:15px;cursor:pointer}
+.attList{display:grid;gap:6px;margin-top:8px}
+.attList div{display:flex;align-items:center;gap:8px;padding:8px 10px;border:1px solid var(--line);border-radius:12px;font-size:14px;min-width:0}
+.attList span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.attList button{border:0;background:var(--bad-bg);color:var(--bad);border-radius:999px;width:28px;height:28px;font-weight:800;cursor:pointer;flex:none}
 .who{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
 .who .nm{font-weight:800;font-size:19px;line-height:1.4}
 .who .meta{color:var(--muted);font-size:13.5px;margin-top:4px;line-height:1.6}
@@ -128,6 +133,7 @@ bdi{unicode-bidi:isolate}
       <label for="aReason" data-t="reason">سبب السلفة</label>
       <select id="aReason"><option value="" data-t="chooseReason">اختر السبب</option><option value="ظروف عائلية" data-t="ظروف عائلية">ظروف عائلية</option><option value="علاج" data-t="علاج">علاج</option><option value="إيجار سكن" data-t="إيجار سكن">إيجار سكن</option><option value="سفر / إجازة" data-t="سفر / إجازة">سفر / إجازة</option><option value="مصاريف السيارة" data-t="مصاريف السيارة">مصاريف السيارة</option><option value="أخرى" data-t="أخرى">أخرى</option></select>
       <label for="aDet" data-t="det">التفاصيل (اختياري)</label><textarea id="aDet" maxlength="1500" placeholder="اكتب أي تفاصيل تساعد في الموافقة على الطلب" data-tp="detPh"></textarea>
+      <label data-t="attL">إرفاق مستندات (اختياري)</label><input type="file" id="aFile" accept="image/*,application/pdf" multiple class="hidden"><button type="button" class="attBtn" data-pick="a"><span data-t="attBtn">📎 إضافة صورة أو ملف PDF</span></button><div class="attList" id="aFiles"></div><div class="hint" data-t="attHint">حتى 3 ملفات — يجب أن يكون حجم كل ملف أقل من 2 ميجا</div>
       <div class="ibbox">
         <label for="aIban" data-t="ibLabel">🏦 رقم الآيبان الذي ستُحوَّل عليه السلفة</label>
         <div class="hint" id="ibNow"></div>
@@ -150,6 +156,7 @@ bdi{unicode-bidi:isolate}
       <label for="cCat" data-t="cCat">نوع الشكوى</label>
       <select id="cCat"><option value="" data-t="chooseType">اختر النوع</option><option value="الراتب" data-t="الراتب">الراتب</option><option value="خصم أو مديونية" data-t="خصم أو مديونية">خصم أو مديونية</option><option value="البنزين / الشريحة" data-t="البنزين / الشريحة">البنزين / الشريحة</option><option value="السيارة" data-t="السيارة">السيارة</option><option value="المشرف" data-t="المشرف">المشرف</option><option value="التطبيق / الحساب" data-t="التطبيق / الحساب">التطبيق / الحساب</option><option value="أخرى" data-t="أخرى">أخرى</option></select>
       <label for="cDet" data-t="cDet">اكتب تفاصيل الشكوى</label><textarea id="cDet" maxlength="1500" placeholder="ما المشكلة؟ ومتى حدثت؟" data-tp="cDetPh"></textarea>
+      <label data-t="attL">إرفاق مستندات (اختياري)</label><input type="file" id="cFile" accept="image/*,application/pdf" multiple class="hidden"><button type="button" class="attBtn" data-pick="c"><span data-t="attBtn">📎 إضافة صورة أو ملف PDF</span></button><div class="attList" id="cFiles"></div><div class="hint" data-t="attHint">حتى 3 ملفات — يجب أن يكون حجم كل ملف أقل من 2 ميجا</div>
       <label for="cPh" data-t="phone">رقم الجوال</label><input id="cPh" type="tel" inputmode="tel" maxlength="15" placeholder="05xxxxxxxx">
       <button class="main" id="cSend" type="button" data-t="cSend">إرسال الشكوى</button>
       <div class="err" id="cErr"></div>
@@ -270,6 +277,13 @@ const L = {
   e_iban: ["رقم الآيبان غير صحيح — يرجى مراجعته من تطبيق البنك.", "The IBAN is not valid — check it in your bank app.", "IBAN সঠিক নয় — আপনার ব্যাংক অ্যাপ থেকে যাচাই করুন।"],
   e_details: ["اكتب تفاصيل الشكوى.", "Write the complaint details.", "অভিযোগের বিস্তারিত লিখুন।"],
   e_iq: ["رقم الإقامة غير صحيح.", "The Iqama number is not valid.", "ইকামা নম্বর সঠিক নয়।"],
+  attL: ["إرفاق مستندات (اختياري)", "Attach documents (optional)", "নথি সংযুক্ত করুন (ঐচ্ছিক)"],
+  attBtn: ["📎 إضافة صورة أو ملف PDF", "📎 Add a photo or PDF", "📎 ছবি বা PDF যোগ করুন"],
+  attHint: ["حتى 3 ملفات — يجب أن يكون حجم كل ملف أقل من 2 ميجا", "Up to 3 files — each file must be under 2 MB", "সর্বোচ্চ ৩টি ফাইল — প্রতিটি ফাইল ২ MB এর কম হতে হবে"],
+  e_attn: ["يمكن إرفاق 3 ملفات بحد أقصى.", "You can attach up to 3 files.", "সর্বোচ্চ ৩টি ফাইল সংযুক্ত করা যায়।"],
+  e_attsize: ["حجم الملف يجب أن يكون أقل من 2 ميجا.", "Each file must be under 2 MB.", "প্রতিটি ফাইল ২ MB এর কম হতে হবে।"],
+  e_atttype: ["يُسمح بالصور وملفات PDF فقط.", "Only photos and PDF files are allowed.", "শুধু ছবি ও PDF ফাইল দেওয়া যাবে।"],
+  attN: ["📎 {0} مرفق", "📎 {0} attachment(s)", "📎 {0}টি সংযুক্তি"],
   e_generic: ["لم يتم إرسال الطلب — يرجى المحاولة مرة أخرى.", "The request was not sent — please try again.", "আবেদন পাঠানো যায়নি — আবার চেষ্টা করুন।"],
   e_net: ["لا يوجد اتصال الآن — تأكد من الإنترنت وحاول مرة أخرى.", "No connection right now — check your internet and try again.", "এখন সংযোগ নেই — ইন্টারনেট চেক করে আবার চেষ্টা করুন।"],
   e_notReady: ["الخدمة قيد التجهيز — يرجى المحاولة بعد قليل.", "The service is not ready yet — please try again later.", "সেবাটি এখনও প্রস্তুত হয়নি — একটু পরে আবার চেষ্টা করুন।"],
@@ -396,6 +410,41 @@ const AUTO = t => AUTO_K[t] ? T(AUTO_K[t]) : "";
 const ERR = (k, j) => k === "closed" ? T(HK("advHours")) + T("eTryHours") : k === "advweek" || k === "advrej" ? T("e_" + k, fmtDay(j && j.until)) : L["e_" + k] ? T(HK("e_" + k)) : T("e_generic");
 const fmtDay = s => { const m = String(s || "").match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? m[3] + "/" + m[2] + "/" + m[1] : (s || ""); };
 
+/* ===== المرفقات: الصور بتتصغر قبل الرفع، وكل ملف لازم يكون أقل من 2 ميجا ===== */
+const ATT_MAX = 3, ATT_BYTES = 2 * 1024 * 1024, ATT = { a: [], c: [] };
+const b64Size = d => Math.floor(d.length * 3 / 4) - (d.endsWith("==") ? 2 : d.endsWith("=") ? 1 : 0);
+const readB64 = f => new Promise((res, rej) => { const r = new FileReader(); r.onload = () => res(String(r.result).split(",")[1] || ""); r.onerror = rej; r.readAsDataURL(f); });
+async function shrink(f) {
+  const url = URL.createObjectURL(f);
+  try { const img = await new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = url; });
+    for (const [side, q] of [[1600, .82], [1280, .72], [1000, .62], [800, .55]]) { const k = Math.min(1, side / Math.max(img.naturalWidth, img.naturalHeight)), c = document.createElement("canvas");
+      c.width = Math.max(1, Math.round(img.naturalWidth * k)); c.height = Math.max(1, Math.round(img.naturalHeight * k)); const x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      const d = c.toDataURL("image/jpeg", q).split(",")[1] || ""; if (b64Size(d) < ATT_BYTES) return { t: "image/jpeg", d }; }
+    return null; } finally { URL.revokeObjectURL(url); }
+}
+async function addFiles(k, files) {
+  const errId = k === "a" ? "aErr" : "cErr"; err(errId, "");
+  for (const f of files) {
+    if (ATT[k].length >= ATT_MAX) { err(errId, T("e_attn")); break; }
+    const pdf = f.type === "application/pdf" || /\.pdf$/i.test(f.name), img = /^image\//.test(f.type);
+    if (!pdf && !img) { err(errId, T("e_atttype")); continue; }
+    try { let o;
+      if (pdf) { if (f.size >= ATT_BYTES) { err(errId, T("e_attsize")); continue; } o = { t: "application/pdf", d: await readB64(f) }; }
+      else if (f.size < ATT_BYTES && /^image\/(jpeg|png|webp)$/.test(f.type) && f.size < 700 * 1024) o = { t: f.type, d: await readB64(f) };
+      else { o = await shrink(f); if (!o) { err(errId, T("e_attsize")); continue; } }
+      ATT[k].push({ n: f.name.slice(0, 80), t: o.t, d: o.d });
+    } catch (e) { err(errId, T("e_atttype")); }
+  }
+  drawFiles(k);
+}
+function drawFiles(k) { const box = $(k + "Files"); box.innerHTML = ATT[k].map((f, i) => `<div><span>${f.t === "application/pdf" ? "📄" : "🖼️"} ${esc(f.n)}</span><small dir="ltr">${(b64Size(f.d) / 1048576).toFixed(1)} MB</small><button type="button" data-rm="${k}${i}" aria-label="×">×</button></div>`).join(""); }
+document.addEventListener("click", e => {
+  const p = e.target.closest("[data-pick]"); if (p) { $(p.dataset.pick + "File").click(); return; }
+  const r = e.target.closest("[data-rm]"); if (r) { const k = r.dataset.rm[0], i = +r.dataset.rm.slice(1); ATT[k].splice(i, 1); drawFiles(k); }
+});
+["a", "c"].forEach(k => $(k + "File").addEventListener("change", e => { addFiles(k, [...e.target.files]); e.target.value = ""; }));
+const withFiles = (k, o) => ATT[k].length ? Object.assign(o, { files: ATT[k].map(f => ({ n: f.n, t: f.t, d: f.d })) }) : o;
+
 async function send(p, btn, errId) {
   err(errId, "");
   if (!API) { err(errId, T("e_notReady")); return; }
@@ -406,7 +455,7 @@ async function send(p, btn, errId) {
     if (!j.ok) { err(errId, ERR(j.err, j)); return; }
     $("dTitle").textContent = T(p.type === "سلفة" ? "doneAdv" : p.type === "آيبان" ? "doneIb" : "doneCmp"); $("dSub").textContent = AUTO(p.type) || T("keepNo");
     $("dNo").classList.remove("hidden"); $("dNo").textContent = j.no;
-    ["aAmt", "aDet", "cDet", "aIban"].forEach(id => $(id).value = ""); $("ibBank").textContent = ""; $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
+    ["aAmt", "aDet", "cDet", "aIban"].forEach(id => $(id).value = ""); ATT.a = []; ATT.c = []; drawFiles("a"); drawFiles("c"); $("ibBank").textContent = ""; $("aReason").value = ""; $("cCat").value = ""; $("aOk").checked = false;
     show("vDone");
   } catch (e) {
     err(errId, T("e_net"));
@@ -425,13 +474,13 @@ $("aSend").onclick = () => {
   if (!phOk($("aPh").value)) return err("aErr", T("e_phone"));
   if (!$("aOk").checked) return err("aErr", T("e_agree"));
   const det = $("aDet").value.trim();
-  send(Object.assign(payload("سلفة"), { amount: amt, reason: $("aReason").value, iban: ib, bank: ibBank(ib), holder, details: (det ? det + "\n" : "") + "الآيبان: " + ibFmt(ib) + " (" + ibBank(ib) + ") — باسم المندوب", phone: toLatin($("aPh").value).replace(/\D/g, "") }), $("aSend"), "aErr");
+  send(withFiles("a", Object.assign(payload("سلفة"), { amount: amt, reason: $("aReason").value, iban: ib, bank: ibBank(ib), holder, details: (det ? det + "\n" : "") + "الآيبان: " + ibFmt(ib) + " (" + ibBank(ib) + ") — باسم المندوب", phone: toLatin($("aPh").value).replace(/\D/g, "") })), $("aSend"), "aErr");
 };
 $("cSend").onclick = () => {
   if (!$("cCat").value) return err("cErr", T("e_cat"));
   if ($("cDet").value.trim().length < 5) return err("cErr", T("e_cmpDet"));
   if (!phOk($("cPh").value)) return err("cErr", T("e_phone"));
-  send(Object.assign(payload("شكوى"), { reason: $("cCat").value, details: $("cDet").value.trim(), phone: toLatin($("cPh").value).replace(/\D/g, "") }), $("cSend"), "cErr");
+  send(withFiles("c", Object.assign(payload("شكوى"), { reason: $("cCat").value, details: $("cDet").value.trim(), phone: toLatin($("cPh").value).replace(/\D/g, "") })), $("cSend"), "cErr");
 };
 
 /* ===== الآيبان ===== */
@@ -456,7 +505,7 @@ async function loadList() {
     const j = await (await fetch(API + "?action=status&iq=" + IQ + "&tok=" + TOK)).json();
     if (!j.ok) throw 0;
     box.innerHTML = j.list.length ? j.list.map(r => `<div class="req"><div class="top"><div class="t1">${r.type === "سلفة" ? T("tAdv") + (r.amount ? " — " + Number(r.amount).toLocaleString("en-US") + " " + T("sar") : "") : r.type === "آيبان" ? T("tIb") + " — " + esc(r.reason) : T("tCmp") + " — " + esc(T(r.reason))}</div><span class="pill ${ST[r.status] || "s-new"}">${esc(T(r.status))}</span></div>
-      <div class="t2">${T("reqNo")} <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi></div>${r.reply ? `<div class="rep"><b>${T(r.by === "الشؤون القانونية" ? "replyLegal" : "replyAdmin")}:</b> ${esc(r.reply)}</div>` : (r.status === "جديد" || r.status === "تحت المراجعة") && AUTO(r.type) ? `<div class="rep auto"><b>${T("autoLbl")}:</b> ${AUTO(r.type)}</div>` : ""}</div>`).join("")
+      <div class="t2">${T("reqNo")} <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi>${r.att ? " · " + T("attN", r.att) : ""}</div>${r.reply ? `<div class="rep"><b>${T(r.by === "الشؤون القانونية" ? "replyLegal" : "replyAdmin")}:</b> ${esc(r.reply)}</div>` : (r.status === "جديد" || r.status === "تحت المراجعة") && AUTO(r.type) ? `<div class="rep auto"><b>${T("autoLbl")}:</b> ${AUTO(r.type)}</div>` : ""}</div>`).join("")
       : `<div class="card hint" style="text-align:center">${T("noReqs")}</div>`;
   } catch (e) { box.innerHTML = `<div class="card hint" style="text-align:center">${T("listFail")}</div>`; }
 }

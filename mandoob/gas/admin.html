@@ -95,6 +95,14 @@ bdi{unicode-bidi:isolate}
 .rq .what{margin-top:10px;font-weight:800;font-size:15.5px}
 .rq .det{margin-top:6px;font-size:14.5px;line-height:1.7;white-space:pre-wrap;overflow-wrap:anywhere}
 .rq .det.tr{background:var(--accent-soft,#eef2ff);border-radius:10px;padding:8px 10px}
+.rq .atts{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center;font-size:13.5px;font-weight:700}
+.rq .atts button{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;padding:5px 12px;font:inherit;font-size:13.5px;cursor:pointer;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.viewer{position:fixed;inset:0;background:rgb(0 0 0 / .72);z-index:60;display:flex;flex-direction:column;padding:max(12px,env(safe-area-inset-top,0px)) 12px max(12px,env(safe-area-inset-bottom,0px))}
+.viewer .vbar{display:flex;gap:8px;align-items:center;justify-content:space-between;color:#fff;font-weight:700;margin-bottom:8px;flex-wrap:wrap}
+.viewer .vbar a,.viewer .vbar button{background:#fff;color:#111;border:0;border-radius:10px;padding:8px 14px;font:inherit;font-weight:800;text-decoration:none;cursor:pointer}
+.viewer .vbody{flex:1;min-height:0;display:flex;align-items:center;justify-content:center;background:#222;border-radius:12px;overflow:auto}
+.viewer img{max-width:100%;max-height:100%;object-fit:contain}
+.viewer iframe{width:100%;height:100%;border:0;background:#fff}
 .rq .act{margin-top:12px;border-top:1px dashed var(--line);padding-top:10px;display:grid;gap:8px}
 .rq .act select,.rq .act textarea{font-size:15px;padding:9px 11px}
 .rq .act textarea{min-height:64px}
@@ -176,7 +184,7 @@ function render() {
   $("list").innerHTML = L.length ? L.map(r => `<div class="rq ${r.type === "سلفة" ? "t-s" : r.type === "آيبان" ? "t-b" : "t-c"}" data-no="${esc(r.no)}">
     <div class="top"><div><div class="nm">${esc(r.name)}</div><div class="mt">إقامة <bdi dir="ltr">${esc(r.iq)}</bdi> · جوال <bdi dir="ltr">${esc(r.phone)}</bdi><br>${esc(r.acc)}${r.sup ? " · المشرف: " + esc(r.sup) : ""}</div></div><span class="pill ${ST[r.status] || "s-new"}">${esc(r.status)}</span></div>
     <div class="what">${r.type === "سلفة" ? "💰 سلفة " + nf(r.amount) + " ريال — " + esc(r.reason) : r.type === "آيبان" ? "🏦 آيبان — " + esc(r.reason) : "📝 شكوى — " + esc(r.reason)}</div>
-    ${r.details ? `<div class="det">${esc(r.details)}</div>` : ""}${r.tr ? `<div class="det tr"><b>🌐 الترجمة للعربي:</b> ${esc(r.tr)}</div>` : ""}
+    ${r.details ? `<div class="det">${esc(r.details)}</div>` : ""}${r.tr ? `<div class="det tr"><b>🌐 الترجمة للعربي:</b> ${esc(r.tr)}</div>` : ""}${r.att && r.att.length ? `<div class="atts">📎 المرفقات (${r.att.length}): ${r.att.map(a => `<button type="button" data-file="${esc(a.id)}" title="${esc(a.n)}">${/\.pdf$/i.test(a.n) ? "📄" : "🖼️"} ${esc(a.n)}</button>`).join("")}</div>` : ""}
     <div class="mt">رقم الطلب <bdi dir="ltr">${esc(r.no)}</bdi> · <bdi dir="ltr">${esc(r.date)}</bdi>${r.replied ? ` · آخر رد <bdi dir="ltr">${esc(r.replied)}</bdi>` : ""}</div>
     ${r.by ? `<div class="mt">آخر رد بواسطة: <b>${esc(r.by)}</b></div>` : ""}
     ${r.log ? `<details class="mt"><summary>📜 سجل الردود (${String(r.log).split("\n").length})</summary><div class="det" style="white-space:pre-wrap">${esc(r.log)}</div></details>` : ""}
@@ -184,7 +192,23 @@ function render() {
       <textarea aria-label="رد الإدارة" placeholder="الرد الذي سيظهر للمندوب">${esc(r.reply)}</textarea><button type="button">حفظ</button></div>`}</div>`).join("")
     : '<div class="card hint" style="text-align:center;grid-column:1/-1">لا توجد طلبات مطابقة لهذا الفلتر.</div>';
 }
+/* فتح المرفق جوه الصفحة (الملف بيتجاب من الخادم بعد التأكد من الصلاحية) */
+let VURL = null;
+function closeViewer() { const v = document.querySelector(".viewer"); if (v) v.remove(); if (VURL) { URL.revokeObjectURL(VURL); VURL = null; } }
+async function openFile(btn) {
+  const label = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<span class="spin"></span>';
+  try { const j = await call({ action: "admin_file", id: btn.dataset.file }); if (!j.ok) throw 0;
+    const bin = atob(j.d), u8 = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    closeViewer(); VURL = URL.createObjectURL(new Blob([u8], { type: j.t }));
+    const v = document.createElement("div"); v.className = "viewer"; v.setAttribute("role", "dialog");
+    v.innerHTML = `<div class="vbar"><span>${esc(j.n)}</span><span style="display:flex;gap:8px"><a href="${VURL}" target="_blank" rel="noopener" download="${esc(j.n)}">فتح / تنزيل</a><button type="button" data-close>إغلاق ✕</button></span></div><div class="vbody">${/^image\//.test(j.t) ? `<img src="${VURL}" alt="${esc(j.n)}">` : `<iframe src="${VURL}" title="${esc(j.n)}"></iframe>`}</div>`;
+    v.addEventListener("click", e => { if (e.target === v || e.target.closest("[data-close]")) closeViewer(); }); document.body.appendChild(v);
+  } catch (x) { toast("تعذّر فتح الملف — يرجى المحاولة مرة أخرى"); }
+  finally { btn.disabled = false; btn.innerHTML = label; }
+}
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeViewer(); });
 $("list").addEventListener("click", async e => {
+  const fb = e.target.closest("[data-file]"); if (fb) { openFile(fb); return; }
   const b = e.target.closest(".act button"); if (!b) return;
   const card = b.closest(".rq"), no = card.dataset.no, status = card.querySelector("select").value, reply = card.querySelector("textarea").value.trim();
   b.disabled = true; b.innerHTML = '<span class="spin"></span>';
@@ -227,11 +251,11 @@ $("advXl").onclick = () => {
   XLSX.writeFile(wb, "كل السلف " + new Date().toISOString().slice(0, 10) + ".xlsx");
 };
 $("xlBtn").onclick = () => {
-  const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "الآيبان", "البنك", "التفاصيل", "الترجمة للعربي", "الحالة", "رد الإدارة", "رد بواسطة", "تاريخ الرد", "سجل الردود"];
+  const H = ["رقم الطلب", "التاريخ", "النوع", "الإقامة", "الاسم", "المنصة / الحساب", "المشرف", "المدينة", "الجوال", "المبلغ", "السبب / النوع", "الآيبان", "البنك", "التفاصيل", "الترجمة للعربي", "الحالة", "رد الإدارة", "رد بواسطة", "تاريخ الرد", "سجل الردود", "المرفقات"];
   const rows = oldFirst(filtered()).map(r => { const [ib, bank] = ibOf(r.details);
-    return [r.no, xDate(r.date), r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, Number(r.amount) || "", r.reason, ib, bank, detOf(r.details), r.tr || "", r.status, r.reply, r.by || "", xDate(r.replied), r.log || ""]; });
+    return [r.no, xDate(r.date), r.type, r.iq, r.name, r.acc, r.sup, r.city, r.phone, Number(r.amount) || "", r.reason, ib, bank, detOf(r.details), r.tr || "", r.status, r.reply, r.by || "", xDate(r.replied), r.log || "", (r.att || []).map(a => a.n).join("، ")]; });
   const wb = XLSX.utils.book_new(); wb.Workbook = { Views: [{ RTL: true }] };
-  XLSX.utils.book_append_sheet(wb, xSheet(H, rows, [14, 17, 9, 13, 30, 26, 14, 12, 13, 10, 18, 28, 18, 40, 40, 14, 30, 16, 17, 60]), "الطلبات");
+  XLSX.utils.book_append_sheet(wb, xSheet(H, rows, [14, 17, 9, 13, 30, 26, 14, 12, 13, 10, 18, 28, 18, 40, 40, 14, 30, 16, 17, 60, 30]), "الطلبات");
   XLSX.writeFile(wb, "طلبات المناديب " + new Date().toISOString().slice(0, 10) + ".xlsx");
 };
 (() => { const p = ss.get("tq_admin"); if (p) { PASS = p; load(true); } })();

@@ -9,7 +9,7 @@ const SS_ID = '';   // رقم الشيت (من رابطه بين /d/ و /edit) �
 const SHEET = 'الطلبات';
 const ss_ = () => SS_ID ? SpreadsheetApp.openById(SS_ID) : SpreadsheetApp.getActive();
 const HEAD = ['رقم الطلب', 'التاريخ', 'النوع', 'رقم الإقامة', 'الاسم', 'المنصة / الحساب', 'المشرف', 'المدينة', 'الجوال',
-  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق', 'رد بواسطة', 'الترجمة للعربي', 'سجل الردود'];
+  'المبلغ', 'السبب / نوع الشكوى', 'التفاصيل', 'الحالة', 'رد الإدارة', 'تاريخ الرد', 'رمز التحقق', 'رد بواسطة', 'الترجمة للعربي', 'سجل الردود', 'المرفقات'];
 // ترجمة تلقائية للعربي لأي نص مكتوب بلغة تانية (إنجليزي / بنغالي / أوردو ...)
 function tr_(s) {
   s = String(s || '').replace(/\n?الآيبان:[^\n]*/, '').trim(); if (!s) return '';
@@ -23,6 +23,24 @@ const VIEW_PASS = '';   // كلمة سر للإدارة: يشوفوا الطلب
 const LEGAL_PASS = '';   // كلمة سر الشؤون القانونية: بيشوفوا الشكاوى بس ويردّوا عليها (8 حروف أو أكتر)
 const LEGAL_USERS = {};  // كلمة سر لكل موظف في الشؤون القانونية علشان يبان مين رد: { 'كلمة السر': 'الاسم' } (8 حروف أو أكتر) — المندوب بيشوف «الشؤون القانونية» بس
 const SUP_PASS = '';     // كلمة سر المشرفين: بيشوفوا طلبات السلف وقرار الإدارة فيها بس (عرض فقط) — 8 حروف أو أكتر
+// مرفقات الطلبات (صور / PDF): بتتحفظ في فولدر خاص على Google Drive، ومحدش بيفتحها غير اللي ليه صلاحية من صفحة الإدارة
+const ATT_MAX = 3, ATT_BYTES = 2 * 1024 * 1024, ATT_DIR = 'مرفقات طلبات المناديب';
+const ATT_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'application/pdf': 'pdf' };
+function attDir_() { const pr = PropertiesService.getScriptProperties(); const id = pr.getProperty('ATT_DIR');
+  if (id) { try { return DriveApp.getFolderById(id); } catch (x) {} }
+  const f = DriveApp.createFolder(ATT_DIR); pr.setProperty('ATT_DIR', f.getId()); return f; }
+// بيتأكد إن الملف فعلًا صورة أو PDF (من أول بايتات الملف مش من الاسم بس) وحجمه أقل من 2 ميجا
+function attCheck_(files) {
+  if (!files) return { ok: true, list: [] }; if (!Array.isArray(files) || files.length > ATT_MAX) return { ok: false, err: 'attn' };
+  const list = [];
+  for (const f of files) { const t = String(f && f.t || ''); if (!ATT_TYPES[t]) return { ok: false, err: 'atttype' };
+    let bytes; try { bytes = Utilities.base64Decode(String(f.d || '')); } catch (x) { return { ok: false, err: 'atttype' }; }
+    if (!bytes.length || bytes.length >= ATT_BYTES) return { ok: false, err: 'attsize' };
+    const h = bytes.slice(0, 4).map(b => b & 255), magic = t === 'application/pdf' ? h[0] === 0x25 && h[1] === 0x50 && h[2] === 0x44 && h[3] === 0x46 : t === 'image/png' ? h[0] === 0x89 && h[1] === 0x50 : t === 'image/jpeg' ? h[0] === 0xFF && h[1] === 0xD8 : h[0] === 0x52 && h[1] === 0x49;
+    if (!magic) return { ok: false, err: 'atttype' };
+    list.push({ t, bytes, n: clean_(f.n, 80).replace(/[\\/:*?"|]/g, '_') || 'ملف' }); }
+  return { ok: true, list };
+}
 const NOTIFY = true;          // يبعتلك إيميل مع كل طلب جديد
 const MAX_PER_DAY = 3;
 // المناديب اللي مش على كفالة الشركة: النظام مقفول عليهم (بصمة رقم الإقامة)
@@ -67,6 +85,7 @@ function doPost(e) {
     if (b.action === 'admin_update' && role !== 'admin' && role !== 'legal') return json_({ ok: false, err: 'role' });
     const who = role === 'legal' && Object.prototype.hasOwnProperty.call(LEGAL_USERS, String(b.pass)) ? String(LEGAL_USERS[String(b.pass)]) : '';
     if (b.action === 'admin_list') { const o = adminList_(role); o.role = role; o.who = who; return json_(o); }
+    if (b.action === 'admin_file') return json_(adminFile_(String(b.id || ''), role));
     return json_(adminUpdate_(b, role, who));
   }
   if (b.action !== 'submit') return json_({ ok: false, err: 'bad' });
@@ -82,6 +101,7 @@ function doPost(e) {
   if (type === 'شكوى' && details.length < 5) return json_({ ok: false, err: 'details' });
   const iban = String(b.iban || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
   if ((type === 'آيبان' || type === 'سلفة') && !ibanOk_(iban)) return json_({ ok: false, err: 'iban' });
+  const att = type === 'آيبان' ? { ok: true, list: [] } : attCheck_(b.files); if (!att.ok) return json_({ ok: false, err: att.err });
 
   const lock = LockService.getScriptLock(); lock.waitLock(20000);
   try {
@@ -110,12 +130,19 @@ function doPost(e) {
     const row = [no, new Date(), type, "'" + iq, clean_(b.name, 120), clean_(b.acc, 200), clean_(b.sup, 80), clean_(b.city, 60), "'" + clean_(b.phone, 15),
       amount, clean_(b.reason, 80), details, 'جديد', '', '', tok, '', tr_(details)];
     sh.appendRow(row);
+    let attNote = '';
+    if (att.list.length) {
+      try { const dir = attDir_(), saved = att.list.map((f, i) => { const fl = dir.createFile(Utilities.newBlob(f.bytes, f.t, no + '-' + (i + 1) + '-' + f.n.replace(/\.[^.]*$/, '') + '.' + ATT_TYPES[f.t])); return f.n + ' | ' + fl.getId(); });
+        if (!sh.getRange(1, 20).getValue()) sh.getRange(1, 20).setValue('المرفقات');
+        sh.getRange(sh.getLastRow(), 20).setValue(saved.join('\n')); attNote = `\nالمرفقات: ${saved.length} ملف`; }
+      catch (x) { attNote = '\nالمرفقات: تعذّر الحفظ'; }
+    }
     if (iban) saveIban_(iq, row[4], iban, clean_(type === 'سلفة' ? b.bank : b.reason, 60), clean_(b.holder, 80), row[8].slice(1), no);
     if (NOTIFY) {
       try {
         MailApp.sendEmail(Session.getEffectiveUser().getEmail(), `طلب ${type} جديد — ${row[4]} (${no})`,
           `النوع: ${type}\nالاسم: ${row[4]}\nالإقامة: ${iq}\nالحساب: ${row[5]}\nالمشرف: ${row[6]}\nالجوال: ${row[8].slice(1)}\n` +
-          (type === 'سلفة' ? `المبلغ: ${amount} ريال\n` : '') + `السبب / النوع: ${row[10]}\nالتفاصيل: ${details}\n` + (row[17] ? `الترجمة: ${row[17]}\n` : '') + `\nافتح الشيت: ${ss_().getUrl()}`);
+          (type === 'سلفة' ? `المبلغ: ${amount} ريال\n` : '') + `السبب / النوع: ${row[10]}\nالتفاصيل: ${details}\n` + (row[17] ? `الترجمة: ${row[17]}\n` : '') + attNote + `\nافتح الشيت: ${ss_().getUrl()}`);
       } catch (x) {}
     }
     return json_({ ok: true, no });
@@ -129,7 +156,7 @@ function status_(iq, tok) {
   if (sh.getLastRow() < 2) return { ok: true, list: [] };
   const rows = sh.getRange(2, 1, sh.getLastRow() - 1, HEAD.length).getValues();
   const list = rows.filter(r => String(r[3]) === iq && String(r[15]) === tok).map(r => ({
-    no: r[0], date: Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd'), type: r[2], amount: r[9], reason: r[10], status: r[12] || 'جديد', reply: r[13] || '', by: /^الشؤون القانونية/.test(String(r[16] || '')) ? 'الشؤون القانونية' : (r[16] || '')
+    no: r[0], date: Utilities.formatDate(new Date(r[1]), 'Asia/Riyadh', 'yyyy-MM-dd'), type: r[2], amount: r[9], reason: r[10], status: r[12] || 'جديد', reply: r[13] || '', by: /^الشؤون القانونية/.test(String(r[16] || '')) ? 'الشؤون القانونية' : (r[16] || ''), att: attOf_(r[19]).length
   })).reverse().slice(0, 20);
   return { ok: true, list };
 }
@@ -155,7 +182,18 @@ function adminList_(role) {
   let n = 0;   // ترجمة الطلبات القديمة اللي لسه ماتترجمتش (20 في كل مرة)
   rows.forEach((r, i) => { if (n < 20 && r[0] && r[11] && r[17] === '') { const t = tr_(r[11]); r[17] = t || '-'; sh.getRange(i + 2, 18).setValue(r[17]); n++; } });
   return { ok: true, list: rows.filter(r => r[0] && (role !== 'legal' || r[2] === 'شكوى') && (role !== 'sup' || r[2] === 'سلفة')).map(r => ({ no: r[0], date: f(r[1]), type: r[2], iq: String(r[3]), name: r[4], acc: r[5], sup: r[6], city: r[7], phone: String(r[8]),
-    amount: r[9], reason: r[10], details: r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]), by: r[16] || '', tr: r[17] && r[17] !== '-' ? r[17] : '', log: r[18] || '' })).reverse() };
+    amount: r[9], reason: r[10], details: r[11], status: r[12] || 'جديد', reply: r[13] || '', replied: f(r[14]), by: r[16] || '', tr: r[17] && r[17] !== '-' ? r[17] : '', log: r[18] || '', att: attOf_(r[19]) })).reverse() };
+}
+const attOf_ = v => String(v || '').split('\n').map(l => { const i = l.lastIndexOf(' | '); return i < 0 ? null : { n: l.slice(0, i), id: l.slice(i + 3).trim() }; }).filter(Boolean);
+// فتح مرفق: بيتأكد إن الملف تبع طلب اللي فاتح ليه صلاحية يشوفه (الشؤون القانونية = الشكاوى، المشرفين = السلف)
+function adminFile_(id, role) {
+  if (!/^[\w-]{10,}$/.test(id)) return { ok: false, err: 'no' };
+  const sh = ss_().getSheetByName(SHEET); if (sh.getLastRow() < 2) return { ok: false, err: 'no' };
+  const rows = sh.getRange(2, 1, sh.getLastRow() - 1, 20).getValues();
+  const r = rows.find(x => attOf_(x[19]).some(a => a.id === id)); if (!r) return { ok: false, err: 'no' };
+  if ((role === 'legal' && r[2] !== 'شكوى') || (role === 'sup' && r[2] !== 'سلفة')) return { ok: false, err: 'role' };
+  const bl = DriveApp.getFileById(id).getBlob();
+  return { ok: true, t: bl.getContentType(), n: attOf_(r[19]).find(a => a.id === id).n, d: Utilities.base64Encode(bl.getBytes()) };
 }
 function adminUpdate_(b, role, who) {
   if (STATUSES.indexOf(b.status) < 0) return { ok: false, err: 'status' };
