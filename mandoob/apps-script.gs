@@ -29,6 +29,8 @@ const ATT_TYPES = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp
 function attDir_() { const pr = PropertiesService.getScriptProperties(); const id = pr.getProperty('ATT_DIR');
   if (id) { try { return DriveApp.getFolderById(id); } catch (x) {} }
   const f = DriveApp.createFolder(ATT_DIR); pr.setProperty('ATT_DIR', f.getId()); return f; }
+// شغّلها مرة واحدة من المحرر (تشغيل) علشان توافق على صلاحية Google Drive وتعمل فولدر المرفقات
+function setupAttachments() { const f = attDir_(); Logger.log('فولدر المرفقات: ' + f.getUrl()); }
 // بيتأكد إن الملف فعلًا صورة أو PDF (من أول بايتات الملف مش من الاسم بس) وحجمه أقل من 2 ميجا
 function attCheck_(files) {
   if (!files) return { ok: true, list: [] }; if (!Array.isArray(files) || files.length > ATT_MAX) return { ok: false, err: 'attn' };
