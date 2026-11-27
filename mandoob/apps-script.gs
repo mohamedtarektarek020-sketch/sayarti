@@ -82,7 +82,7 @@ function doGet(e) {
 function doPost(e) {
   let b; try { b = JSON.parse(e.postData.contents); } catch (x) { return json_({ ok: false, err: 'bad' }); }
   if (b.action === 'status') return json_(status_(clean_(b.iq, 10), clean_(b.tok, 40)));
-  if (b.action === 'admin_list' || b.action === 'admin_update') {
+  if (b.action === 'admin_list' || b.action === 'admin_update' || b.action === 'admin_file') {
     const role = adminOk_(b.pass); if (!role) return json_({ ok: false, err: 'pass' });
     if (b.action === 'admin_update' && role !== 'admin' && role !== 'legal') return json_({ ok: false, err: 'role' });
     const who = role === 'legal' && Object.prototype.hasOwnProperty.call(LEGAL_USERS, String(b.pass)) ? String(LEGAL_USERS[String(b.pass)]) : '';
