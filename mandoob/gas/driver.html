@@ -64,6 +64,7 @@ button{font:inherit;cursor:pointer}
 .choices{display:grid;gap:12px;margin-top:16px}
 .choice{display:flex;align-items:center;gap:14px;width:100%;text-align:start;background:var(--card);border:1.5px solid var(--line);border-radius:18px;padding:16px;color:var(--ink)}
 .choice:hover{border-color:var(--accent)}
+.pausebox{margin-top:14px;padding:14px 16px;border-radius:16px;background:#fff4e5;border:2px solid #f59e0b;color:#8a4b00;font-weight:800;font-size:15px;line-height:1.8}
 .choice.closed{opacity:.6;background:var(--line)}.choice.closed .t2{color:var(--bad);font-weight:700}
 .req .rep.auto{border:1px dashed var(--muted);color:var(--muted)}
 .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--card);padding:12px 18px;border-radius:14px;z-index:50;max-width:calc(100% - 32px);font-weight:700;text-align:center;line-height:1.6}
@@ -118,6 +119,7 @@ bdi{unicode-bidi:isolate}
   <!-- الاختيارات -->
   <section id="vHome" class="hidden">
     <div class="card lift"><div class="who"><div><div class="nm" id="whoName"></div><div class="meta" id="whoMeta"></div></div><button class="ghost" id="outBtn" type="button" data-t="logout">خروج</button></div></div>
+    <div class="pausebox hidden" id="pauseBox" role="alert" data-t="advPaused"></div>
     <div class="choices">
       <button class="choice" type="button" data-go="adv"><span class="ic m">💰</span><span><div class="t1" data-t="advT1">طلب سلفة</div><div class="t2">اطلب مبلغًا مقدمًا يُخصم من راتبك</div></span></button>
       <button class="choice" type="button" data-go="cmp"><span class="ic c">📝</span><span><div class="t1" data-t="cmpT1">تقديم شكوى</div><div class="t2" data-t="cmpT2">الراتب، الخصومات، البنزين، السيارة، المشرف، أو أي مشكلة أخرى</div></span></button>
@@ -244,6 +246,9 @@ const L = {
   keepNo: ["احتفظ برقم الطلب لمتابعته من «طلباتي»", "Keep the request number to follow it up in \"My requests\"", "\"আমার আবেদনসমূহ\"-এ দেখার জন্য আবেদন নম্বরটি রাখুন"],
   goHome: ["الرجوع للرئيسية", "Back to home", "হোমে ফিরে যান"],
   listH: ["📋 طلباتي", "📋 My requests", "📋 আমার আবেদনসমূহ"],
+  advPaused: ["⚠️ تنبيه: طلبات السلف موقوفة حاليًا بشكل مؤقت بسبب تقفيل الرواتب، وستعود فور الانتهاء منه. يمكنك تقديم الشكاوى ومتابعة طلباتك بشكل طبيعي.", "⚠️ Notice: advance requests are temporarily paused while salaries are being finalized, and will resume as soon as this is done. You can still submit complaints and track your requests as usual.", "⚠️ নোটিশ: বেতন চূড়ান্ত করার কারণে অগ্রিমের আবেদন সাময়িকভাবে বন্ধ আছে, কাজ শেষ হলেই আবার চালু হবে। আপনি স্বাভাবিকভাবে অভিযোগ জমা দিতে ও আবেদনের অবস্থা দেখতে পারবেন।"],
+  advPausedShort: ["⛔ السلف موقوفة مؤقتًا لتقفيل الرواتب", "⛔ Advances paused — salaries being finalized", "⛔ বেতন চূড়ান্তের জন্য অগ্রিম সাময়িক বন্ধ"],
+  e_paused: ["طلبات السلف موقوفة حاليًا بشكل مؤقت بسبب تقفيل الرواتب.", "Advance requests are temporarily paused while salaries are being finalized.", "বেতন চূড়ান্ত করার কারণে অগ্রিমের আবেদন সাময়িকভাবে বন্ধ।"],
   advHours: ["طلب السلفة متاح يوميًا من الساعة 10 صباحًا حتى الساعة 1 ظهرًا فقط.", "Advance requests are available daily from 10 AM to 1 PM only.", "অগ্রিমের আবেদন প্রতিদিন শুধু সকাল 10টা থেকে দুপুর 1টা পর্যন্ত করা যায়।"],
   advHoursN: ["طلب السلفة متاح يوميًا من الساعة 10 صباحًا حتى الساعة 3 عصرًا، ومن الساعة 8 مساءً حتى الساعة 12 منتصف الليل فقط.", "Advance requests are available daily from 10 AM to 3 PM and from 8 PM to 12 midnight only.", "অগ্রিমের আবেদন প্রতিদিন শুধু সকাল 10টা থেকে বিকেল 3টা এবং রাত 8টা থেকে রাত 12টা পর্যন্ত করা যায়।"],
   advOpenNowN: ["متاح الآن حتى الساعة 12 منتصف الليل — اطلب مبلغًا مقدمًا يُخصم من راتبك", "Open now until 12 midnight — get money in advance, deducted from your salary", "এখন রাত 12টা পর্যন্ত খোলা — অগ্রিম টাকা নিন, যা বেতন থেকে কাটা হবে"],
@@ -403,7 +408,11 @@ const advOpen = () => { const h = riyadhHour(); return advWins().some(([a, b]) =
 const HK = k => nightOn() && L[k + "N"] ? k + "N" : k;
 
 function toast(t) { const el = document.createElement("div"); el.className = "toast"; el.textContent = t; document.body.appendChild(el); setTimeout(() => el.remove(), 3500); }
-function advState() { const b = document.querySelector('[data-go="adv"]'); if (!b) return; const o = advOpen(); b.classList.toggle("closed", !o); b.querySelector(".t2").textContent = o ? T(riyadhHour() >= ADV_NIGHT[0] ? "advOpenNowN" : "advOpenNow") : "🕐 " + T(HK("advHours")); }
+// إيقاف السلف مؤقتًا (زي وقت تقفيل الرواتب) — الحالة بتيجي من السيرفر
+let ADV_PAUSED = false;
+const paintPause = () => { const p = document.getElementById("pauseBox"); if (p) p.classList.toggle("hidden", !ADV_PAUSED); };
+(async () => { try { if (!API) return; const j = await (await fetch(API + "?action=config")).json(); ADV_PAUSED = !!(j && j.advPaused); paintPause(); advState(); } catch (e) {} })();
+function advState() { paintPause(); const b = document.querySelector('[data-go="adv"]'); if (!b) return; if (ADV_PAUSED) { b.classList.add("closed"); b.querySelector(".t2").textContent = T("advPausedShort"); return; } const o = advOpen(); b.classList.toggle("closed", !o); b.querySelector(".t2").textContent = o ? T(riyadhHour() >= ADV_NIGHT[0] ? "advOpenNowN" : "advOpenNow") : "🕐 " + T(HK("advHours")); }
 setInterval(advState, 30000);
 // رد تلقائي بيظهر للمندوب لحد ما الإدارة ترد بنفسها
 const AUTO_K = { "سلفة": "autoAdv", "شكوى": "autoCmp", "آيبان": "autoIb" };
@@ -514,7 +523,7 @@ async function loadList() {
 document.addEventListener("click", e => {
   const b = e.target.closest("[data-go]"); if (!b) return;
   const g = b.dataset.go;
-  if (g === "home") show("vHome"); else if (g === "adv") { if (!advOpen()) { advState(); toast(T(HK("advHours"))); return; } err("aErr", ""); ibNowTxt(); show("vAdv"); } else if (g === "cmp") { err("cErr", ""); show("vCmp"); } else if (g === "list") { show("vList"); loadList(); }
+  if (g === "home") show("vHome"); else if (g === "adv") { if (ADV_PAUSED) { advState(); toast(T("advPaused")); return; } if (!advOpen()) { advState(); toast(T(HK("advHours"))); return; } err("aErr", ""); ibNowTxt(); show("vAdv"); } else if (g === "cmp") { err("cErr", ""); show("vCmp"); } else if (g === "list") { show("vList"); loadList(); }
 });
 $("goBtn").onclick = () => login($("iqama").value);
 $("iqama").addEventListener("keydown", e => { if (e.key === "Enter") $("goBtn").click(); });
